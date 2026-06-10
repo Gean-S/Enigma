@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar Supabase - Enigma Ranking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #333;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-test {
+            background: #f0f4ff;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-test:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            display: block;
+        }
+        
+        .copy-button {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+            transition: all 0.3s;
+        }
+        
+        .copy-button:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .pre-filled {
+            background: #f0f4ff;
+            border: 2px solid #667eea !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Configurar Supabase</h1>
+        <p class="subtitle">Enigma Ranking - Sistema Online</p>
+        
+        <div class="info-box">
+            ℹ️ <strong>Cole suas credenciais do Supabase abaixo.</strong> Elas serão salvas apenas no seu navegador.
+        </div>
+        
+        <div class="form-group">
+            <label for="url">
+                Project URL
+                <button class="copy-button" onclick="copiarPadrao('url')">Copiar Padrão</button>
+            </label>
+            <input type="text" id="url" placeholder="https://seu-projeto.supabase.co">
+        </div>
+        
+        <div class="form-group">
+            <label for="key">
+                Anon Key (Publishable Key)
+                <button class="copy-button" onclick="copiarPadrao('key')">Copiar Padrão</button>
+            </label>
+            <input type="text" id="key" placeholder="sb_publishable_xxxxx">
+        </div>
+        
+        <div class="form-group">
+            <label>
+                ✅ Credenciais já fornecidas (clique para preencher):
+            </label>
+            <button class="copy-button" onclick="preencherCredenciais()" style="width: 100%; padding: 12px; background: #d4edda; border: 1px solid #28a745;">
+                ✓ Preencher com Credenciais Fornecidas
+            </button>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn-save" onclick="salvarCredenciais()">💾 Salvar Credenciais</button>
+            <button class="btn-test" onclick="testarConexao()">🧪 Testar Conexão</button>
+        </div>
+        
+        <div id="status" class="status"></div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
+            <strong>Próximos passos:</strong>
+            <ol style="margin-left: 20px; margin-top: 10px;">
+                <li>Clique em "Preencher com Credenciais Fornecidas"</li>
+                <li>Clique em "💾 Salvar Credenciais"</li>
+                <li>Clique em "🧪 Testar Conexão"</li>
+                <li>Abra <strong>enigma.html</strong> e jogue!</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        // Suas credenciais do Supabase
+        const CREDENCIAIS = {
+            url: "https://efdbihtozuulwxmqvszw.supabase.co",
+            key: "sb_publishable_sFXJ1QXWSh_oH1LSR49x6g_SFwqPfU_"
+        };
+        
+        function preencherCredenciais() {
+            document.getElementById('url').value = CREDENCIAIS.url;
+            document.getElementById('key').value = CREDENCIAIS.key;
+            document.getElementById('url').classList.add('pre-filled');
+            document.getElementById('key').classList.add('pre-filled');
+            mostrarStatus('✅ Credenciais preenchidas! Clique em "Salvar Credenciais"', 'success');
+        }
+        
+        function copiarPadrao(tipo) {
+            const texto = tipo === 'url' ? CREDENCIAIS.url : CREDENCIAIS.key;
+            navigator.clipboard.writeText(texto).then(() => {
+                mostrarStatus(`✓ ${tipo === 'url' ? 'URL' : 'Chave'} copiada!`, 'success', 2000);
+            });
+        }
+        
+        function salvarCredenciais() {
+            const url = document.getElementById('url').value.trim();
+            const key = document.getElementById('key').value.trim();
+            
+            if (!url || !key) {
+                mostrarStatus('❌ Preencha URL e Chave!', 'error');
+                return;
+            }
+            
+            if (!url.startsWith('https://')) {
+                mostrarStatus('❌ URL deve começar com https://', 'error');
+                return;
+            }
+            
+            if (!key.startsWith('sb_')) {
+                mostrarStatus('⚠️ Chave parece inválida (deve começar com sb_)', 'warning');
+                return;
+            }
+            
+            // Salvar no localStorage
+            localStorage.setItem('supabase_config', JSON.stringify({ url, key }));
+            
+            mostrarStatus('✅ Credenciais salvas com sucesso! Próximo: testar conexão →', 'success');
+        }
+        
+        async function testarConexao() {
+            const saved = localStorage.getItem('supabase_config');
+            if (!saved) {
+                mostrarStatus('❌ Salve as credenciais primeiro!', 'error');
+                return;
+            }
+            
+            try {
+                const { url, key } = JSON.parse(saved);
+                
+                // Carregar Supabase SDK se não estiver carregado
+                if (!window.supabase) {
+                    mostrarStatus('⏳ Carregando SDK Supabase...', 'warning');
+                    await new Promise(resolve => {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+                        script.onload = resolve;
+                        document.head.appendChild(script);
+                    });
+                }
+                
+                // Tentar conectar
+                const client = window.supabase.createClient(url, key);
+                const { data, error } = await client.from('players').select('count', { count: 'exact' }).limit(1);
+                
+                if (error) {
+                    if (error.message.includes('relation')) {
+                        mostrarStatus('❌ Tabela "players" não existe! Execute o SQL primeiro.', 'error');
+                    } else {
+                        mostrarStatus(`❌ Erro: ${error.message}`, 'error');
+                    }
+                } else {
+                    mostrarStatus('✅ Conexão perfeita! Tabela encontrada. Você está pronto! 🎮', 'success');
+                }
+            } catch (e) {
+                mostrarStatus(`❌ Erro: ${e.message}`, 'error');
+            }
+        }
+        
+        function mostrarStatus(mensagem, tipo, duracao = 0) {
+            const el = document.getElementById('status');
+            el.textContent = mensagem;
+            el.className = `status ${tipo}`;
+            
+            if (duracao > 0) {
+                setTimeout(() => {
+                    el.className = 'status';
+                }, duracao);
+            }
+        }
+        
+        // Auto-preencher se as credenciais estão no localStorage
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('supabase_config');
+            if (saved) {
+                const { url, key } = JSON.parse(saved);
+                document.getElementById('url').value = url;
+                document.getElementById('key').value = key;
+                mostrarStatus('✅ Credenciais carregadas do localStorage!', 'success');
+            }
+        });
+    </script>
+</body>
+</html>

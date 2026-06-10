@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>O Caminho das Sombras — Enigma</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0A0A0A;
+            --surface: #1A1A1A;
+            --parchment: #1e1a16;
+            --parchment-light: #2a2420;
+            --border: #333333;
+            --blood: #A00000;
+            --blood-dark: #5A0000;
+            --blood-glow: rgba(160, 0, 0, .4);
+            --silver: #E0E0E0;
+            --silver-dim: #BBB;
+            --silver-bright: #FFFFFF;
+            --gold: #D4A817;
+            --gold-dim: rgba(212, 168, 23, .18);
+            --success: #388E3C;
+            --error: #D32F2F;
+            --font-display: 'Cinzel Decorative', 'Cinzel', serif;
+            --font-title: 'Cinzel', serif;
+            --font-body: 'Cormorant Garamond', serif;
+            --radius: 16px;
+            --radius-sm: 8px;
+        }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        html {
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: var(--bg);
+            color: var(--silver);
+            font-family: var(--font-body);
+            font-size: 16px;
+            line-height: 1.6;
+            overflow: hidden;
+            height: 100vh;
+            height: 100dvh;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(ellipse at 20% 20%, rgba(160, 0, 0, .05) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(160, 0, 0, .04) 0%, transparent 60%);
+        }
+        .vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, .78) 100%);
+        }
+        .fog {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 160px;
+            z-index: 2;
+            pointer-events: none;
+            background: linear-gradient(to top, rgba(10, 10, 10, .95), transparent);
+        }
+        #ember-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .app {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 500px;
+            height: 100vh;
+            height: 100dvh;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+        .screen {
+            position: absolute;
+            inset: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: var(--bg);
+            transition: transform .5s cubic-bezier(.4, 0, .2, 1), opacity .5s ease;
+            will-change: transform;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .screen::-webkit-scrollbar {
+            width: 4px;
+        }
+        .screen::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+        .screen.active {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        .screen.left {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        .screen.right {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        .screen-inner {
+            padding: 20px 20px 50px;
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .title-main {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: clamp(1.2rem, 5vw, 1.6rem);
+            letter-spacing: 5px;
+            color: var(--silver-bright);
+            text-align: center;
+            text-transform: uppercase;
+            text-shadow: 0 0 35px var(--blood-glow), 0 2px 6px rgba(0, 0, 0, .9);
+        }
+        .title-sub {
+            font-family: var(--font-title);
+            font-weight: 700;
+            font-size: clamp(.65rem, 2.5vw, .85rem);
+            letter-spacing: 10px;
+            color: var(--silver);
+            text-align: center;
+            text-transform: uppercase;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, .7);
+        }
+        .title-section {
+            font-family: var(--font-title);
+            font-weight: 900;
+            font-size: 1.1rem;
+            letter-spacing: 4px;
+            color: var(--silver-bright);
+            text-transform: uppercase;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+        }
+        .oracle-text {
+            font-family: var(--font-body);
+            font-style: italic;
+            font-weight: 700;
+            font-size: 1.2rem;
+            line-height: 1.9;
+            color: var(--silver-bright);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+        }
+        .error-text {
+            font-family: var(--font-body);
+            font-style: italic;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--error);
+            text-align: center;
+            text-shadow: 0 0 12px rgba(211, 47, 47, .4);
+        }
+        .med-divider {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 8px 0;
+            color: var(--blood);
+            font-size: .7rem;
+        }
+        .med-divider::before,
+        .med-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--border), transparent);
+        }
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: var(--radius);
+            font-family: var(--font-title);
+            font-weight: 900;
+            font-size: .82rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all .3s ease;
+            position: relative;
+            overflow: hidden;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+        }
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, .08), transparent 60%);
+            pointer-events: none;
+        }
+        .btn-primary {
+            background: linear-gradient(to bottom, var(--blood), var(--blood-dark));
+            color: var(--silver-bright);
+            box-shadow: 0 4px 18px rgba(160, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .06);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 6px 28px rgba(160, 0, 0, .55);
+            transform: translateY(-1px);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 12px rgba(160, 0, 0, .35);
+        }
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--silver-bright);
+            border: 1px solid var(--border);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+        }
+        .btn-secondary:hover {
+            border-color: var(--blood);
+            color: var(--silver-bright);
+        }
+        .btn-small {
+            padding: 10px 16px;
+            font-size: .74rem;
+            letter-spacing: 2px;
+        }
+        .btn:disabled {
+            opacity: .35;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .4);
+        }
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--silver-bright);
+            font-family: var(--font-body);
+            font-size: 1.1rem;
+            font-weight: 700;
+            transition: all .3s ease;
+            outline: none;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+        }
+        .input-field::placeholder {
+            color: var(--silver-dim);
+            font-style: italic;
+        }
+        .input-field:focus {
+            border-color: var(--blood);
+            box-shadow: 0 0 0 3px var(--blood-glow);
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: .65rem;
+            font-family: var(--font-title);
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .badge-blood {
+            background: rgba(160, 0, 0, .25);
+            color: #EF5350;
+            border: 1px solid rgba(160, 0, 0, .35);
+        }
+        .badge-gold {
+            background: var(--gold-dim);
+            color: var(--gold);
+            border: 1px solid rgba(212, 168, 23, .3);
+        }
+        .badge-silver {
+            background: rgba(212, 212, 212, .1);
+            color: var(--silver-bright);
+            border: 1px solid rgba(212, 212, 212, .2);
+        }
+        .badge-locked {
+            background: rgba(255, 255, 255, .04);
+            color: #888;
+            border: 1px solid #2a2a2a;
+        }
+
+        .book-3d-wrap {
+            perspective: 800px;
+            display: flex;
+            justify-content: center;
+            animation: bookFloat 6s ease-in-out infinite;
+        }
+        .book-3d {
+            width: 200px;
+            height: 280px;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateY(-18deg) rotateX(4deg);
+            transition: transform .6s ease;
+        }
+        .book-3d:hover {
+            transform: rotateY(-8deg) rotateX(2deg);
+        }
+        .book-3d .cover {
+            position: absolute;
+            inset: 0;
+            border-radius: 2px 8px 8px 2px;
+            background-image: url('https://files.manuscdn.com/user_upload_by_module/session_file/310519663565389825/NkKZZVeGHJRhWPoO.png');
+            background-size: cover;
+            background-position: center;
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, .7), inset 2px 0 10px rgba(80, 0, 0, .06), inset -3px 0 12px rgba(0, 0, 0, .5), 5px 0 20px rgba(0, 0, 0, .7), 0 6px 25px rgba(0, 0, 0, .6), 0 0 40px rgba(160, 0, 0, .15);
+            transform: translateZ(12px);
+            z-index: 3;
+        }
+        .book-3d .cover::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 16px;
+            height: 100%;
+            background: linear-gradient(to right, rgba(0, 0, 0, .6), rgba(0, 0, 0, .15) 60%, transparent);
+            border-radius: 2px 0 0 2px;
+            pointer-events: none;
+        }
+        .book-3d .spine {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 24px;
+            height: 100%;
+            border-radius: 2px 0 0 2px;
+            background: linear-gradient(to right, #120404, #060101 50%, #0a0202);
+            box-shadow: -3px 0 10px rgba(0, 0, 0, .5);
+            transform: rotateY(90deg) translateZ(0px);
+            transform-origin: left center;
+            z-index: 2;
+        }
+        .book-3d .pages {
+            position: absolute;
+            top: 4px;
+            right: -5px;
+            width: 10px;
+            height: calc(100% - 8px);
+            border-radius: 0 2px 2px 0;
+            background: linear-gradient(to right, #2a2420, #1f1a16, #18140f, #12100c);
+            box-shadow: 3px 0 8px rgba(0, 0, 0, .4);
+            transform: translateZ(-1px);
+            z-index: 1;
+        }
+        .book-3d .pages::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -4px;
+            width: 7px;
+            height: 100%;
+            background: linear-gradient(to right, #1f1a16, #18140f);
+            border-radius: 0 2px 2px 0;
+        }
+        .book-3d .back-cover {
+            position: absolute;
+            inset: 0;
+            border-radius: 2px 8px 8px 2px;
+            background: #060101;
+            transform: translateZ(-2px);
+            z-index: 0;
+        }
+        @keyframes bookFloat {
+            0%,
+            100% {
+                transform: translateY(0) rotate(-1deg);
+            }
+            50% {
+                transform: translateY(-8px) rotate(1deg);
+            }
+        }
+
+        .profile-cover {
+            height: 200px;
+            position: relative;
+            overflow: hidden;
+            background: #080810;
+        }
+        .profile-cover .cover-bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center top;
+            background-image: url('https://files.manuscdn.com/user_upload_by_module/session_file/310519663565389825/PNDhsIIsCGtMeaUJ.png');
+        }
+        .profile-cover .cover-fade {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(to top, var(--bg) 10%, transparent);
+            z-index: 2;
+        }
+        .profile-cover .cover-vignette {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background: radial-gradient(ellipse at center bottom, transparent 20%, rgba(10, 10, 10, .5) 100%);
+        }
+        .profile-avatar-wrap {
+            display: flex;
+            justify-content: center;
+            margin-top: -55px;
+            position: relative;
+            z-index: 10;
+        }
+        .profile-info {
+            text-align: center;
+            margin-top: 8px;
+        }
+        .profile-name {
+            font-family: var(--font-title);
+            font-weight: 900;
+            font-size: 1.1rem;
+            letter-spacing: 4px;
+            color: var(--silver-bright);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, .8);
+        }
+        .profile-title-text {
+            font-family: var(--font-title);
+            font-size: .6rem;
+            letter-spacing: 6px;
+            color: var(--silver-bright);
+            text-transform: uppercase;
+            margin-top: 2px;
+            font-weight: 700;
+        }
+        .profile-tomos {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+            font-family: var(--font-title);
+            font-weight: 900;
+            font-size: .8rem;
+            color: var(--gold);
+            letter-spacing: 2px;
+        }
+        .avatar-ring {
+            border-radius: 12px;
+            padding: 3px;
+            background: var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .4s ease;
+            flex-shrink: 0;
+            overflow: hidden;
+            background-color: #111;
+        }
+        .avatar-ring.selected {
+            border-color: var(--blood);
+            border-width: 3px;
+            padding: 2px;
+            box-shadow: 0 0 16px var(--blood-glow), 0 0 32px rgba(160, 0, 0, .18);
+        }
+        .avatar-ring img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            border-radius: 8px;
+            background: #0d0d0d;
+        }
+        .avatar-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--silver-bright);
+            background: var(--surface);
+        }
+        .avatar-profile {
+            width: 120px;
+            height: 120px;
+        }
+        .avatar-lg {
+            width: 130px;
+            height: 130px;
+        }
+        .avatar-xs {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+        }
+
+        .oracle-wrapper {
+            position: relative;
+            padding: 24px 6px;
+        }
+        .oracle-card {
+            background: radial-gradient(ellipse at 20% 15%, rgba(60, 40, 20, .1) 0%, transparent 50%), radial-gradient(ellipse at 80% 85%, rgba(60, 40, 20, .08) 0%, transparent 50%), linear-gradient(175deg, #201a14 0%, var(--parchment) 30%, #15120f 100%);
+            clip-path: polygon(24px 0%, calc(100% - 24px) 0%, 100% 24px, 100% calc(100% - 24px), calc(100% - 24px) 100%, 24px 100%, 0% calc(100% - 24px), 0% 24px);
+            padding: 36px 24px 32px;
+            position: relative;
+            border: 1px solid rgba(160, 0, 0, .1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .5), inset 0 0 60px rgba(0, 0, 0, .25);
+        }
+        .oracle-card::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            clip-path: polygon(18px 0%, calc(100% - 18px) 0%, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0% calc(100% - 18px), 0% 24px);
+            border: 1px solid rgba(160, 0, 0, .07);
+            pointer-events: none;
+        }
+        .scroll-curl-tl,
+        .scroll-curl-br {
+            position: absolute;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .scroll-curl-tl {
+            top: -4px;
+            left: -4px;
+            width: 32px;
+            height: 32px;
+            background: radial-gradient(circle at 100% 100%, var(--parchment-light) 55%, transparent 56%);
+            border-radius: 0 0 100% 0;
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, .4);
+        }
+        .scroll-curl-br {
+            bottom: -4px;
+            right: -4px;
+            width: 28px;
+            height: 28px;
+            background: radial-gradient(circle at 0% 0%, var(--parchment) 55%, transparent 56%);
+            border-radius: 100% 0 0 0;
+            box-shadow: -2px -2px 6px rgba(0, 0, 0, .4);
+        }
+        .book-deco {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            color: var(--blood);
+            opacity: .8;
+            margin-bottom: 10px;
+        }
+        .deco-img-wrap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            border-radius: 6px;
+            line-height: 0;
+            padding: 2px;
+        }
+        .deco-img {
+            height: 70px;
+            width: auto;
+            object-fit: contain;
+            filter: brightness(0.85) contrast(1.1) drop-shadow(0 0 6px rgba(0, 0, 0, .5));
+            mix-blend-mode: normal;
+        }
+        .wax-seal {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            margin: 12px auto 0;
+            background: radial-gradient(circle at 38% 35%, #D32F2F, #A00000 50%, #5A0000);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .6), inset 0 -3px 6px rgba(0, 0, 0, .4), inset 0 2px 4px rgba(255, 100, 100, .12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: rgba(255, 200, 200, .6);
+            opacity: 0;
+            transform: scale(0);
+            transition: all .6s cubic-bezier(.34, 1.56, .64, 1);
+        }
+        .wax-seal.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .diff-card {
+            padding: 20px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            transition: all .3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .diff-card:hover:not(.locked) {
+            border-color: var(--blood);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, .4);
+        }
+        .diff-card.completed {
+            border-color: var(--success);
+        }
+        .diff-card.completed::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            color: var(--success);
+            font-size: .9rem;
+        }
+        .diff-card.locked {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+        .diff-card.locked::after {
+            content: '\f023';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            color: #555;
+            font-size: .85rem;
+        }
+        .progress-bar {
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--blood);
+            transition: width .5s ease;
+            border-radius: 2px;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(0, 0, 0, .9);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .35s ease;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-sheet {
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            border-radius: 20px 20px 0 0;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform .4s cubic-bezier(.4, 0, .2, 1);
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .modal-overlay.open .modal-sheet {
+            transform: translateY(0);
+        }
+        .modal-sheet::-webkit-scrollbar {
+            width: 4px;
+        }
+        .modal-sheet::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+        .modal-handle {
+            width: 40px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            margin: 12px auto 0;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            z-index: 200;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-body);
+            font-size: .9rem;
+            font-style: italic;
+            font-weight: 700;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--silver-bright);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, .5);
+            transition: transform .4s cubic-bezier(.4, 0, .2, 1);
+            white-space: nowrap;
+            max-width: 90vw;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast-success {
+            border-color: var(--success);
+            color: #81C784;
+        }
+        .toast-error {
+            border-color: var(--error);
+            color: #EF9A9A;
+        }
+        .toast-gold {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        .rank-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            transition: background .3s;
+        }
+        .rank-item:last-child {
+            border-bottom: none;
+        }
+        .rank-item.player-entry {
+            background: rgba(160, 0, 0, .12);
+            border-left: 3px solid var(--blood);
+        }
+        .rank-num {
+            font-family: var(--font-title);
+            font-weight: 900;
+            font-size: 1.1rem;
+            width: 30px;
+            text-align: center;
+            color: var(--silver-dim);
+        }
+        .rank-item:nth-child(1) .rank-num {
+            color: var(--gold);
+        }
+        .rank-item:nth-child(2) .rank-num {
+            color: #B0BEC5;
+        }
+        .rank-item:nth-child(3) .rank-num {
+            color: #A1887F;
+        }
+        .rank-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .rank-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+            padding: 8px 0;
+        }
+        .avatar-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 16px 10px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all .3s ease;
+            position: relative;
+        }
+        .avatar-option:hover:not(.locked) {
+            background: rgba(160, 0, 0, .08);
+            border-color: rgba(160, 0, 0, .2);
+        }
+        .avatar-option.locked {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+        .avatar-option .lock-overlay {
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            background: rgba(10, 10, 10, .6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: var(--silver-dim);
+        }
+        .avatar-option .avatar-name {
+            font-family: var(--font-title);
+            font-size: .5rem;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--silver-bright);
+            text-align: center;
+            line-height: 1.3;
+        }
+        .avatar-option.selected .avatar-name {
+            color: var(--blood);
+        }
+        .avatar-option .avatar-cost {
+            font-size: .5rem;
+            font-weight: 900;
+            color: var(--silver-bright);
+            font-family: var(--font-title);
+            letter-spacing: 1px;
+        }
+        .avatar-option .avatar-cost.locked-cost {
+            color: var(--blood);
+        }
+        .hint-box {
+            background: rgba(212, 168, 23, .1);
+            border: 1px solid rgba(212, 168, 23, .25);
+            border-radius: var(--radius-sm);
+            padding: 14px 18px;
+            font-style: italic;
+            color: var(--gold);
+            font-size: .95rem;
+            font-weight: 700;
+            animation: fadeInUp .4s ease;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+        }
+        .complete-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            text-align: center;
+            padding: 40px 24px;
+        }
+        .complete-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--blood), var(--blood-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: var(--silver-bright);
+            box-shadow: 0 0 40px var(--blood-glow);
+        }
+        .complete-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            max-width: 280px;
+        }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            text-align: center;
+        }
+        .stat-value {
+            font-family: var(--font-title);
+            font-weight: 900;
+            font-size: 1.4rem;
+            color: var(--silver-bright);
+        }
+        .stat-label {
+            font-size: .6rem;
+            letter-spacing: 2px;
+            color: var(--silver-dim);
+            text-transform: uppercase;
+            font-family: var(--font-title);
+            font-weight: 700;
+            margin-top: 2px;
+        }
+        .new-title-banner {
+            background: linear-gradient(135deg, rgba(212, 168, 23, .18), rgba(212, 168, 23, .06));
+            border: 1px solid rgba(212, 168, 23, .35);
+            border-radius: var(--radius);
+            padding: 16px 24px;
+            width: 100%;
+            max-width: 300px;
+            animation: fadeInUp .6s ease both;
+            animation-delay: .3s;
+        }
+        .new-title-banner .label {
+            font-family: var(--font-title);
+            font-size: .55rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        .new-title-banner .ttl {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: .95rem;
+            color: var(--gold);
+            letter-spacing: 4px;
+            margin-top: 4px;
+        }
+        .game-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+        .game-topbar .back-btn {
+            background: none;
+            border: none;
+            color: var(--silver-dim);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 8px;
+            transition: color .3s;
+        }
+        .game-topbar .back-btn:hover {
+            color: var(--silver-bright);
+        }
+        .game-body {
+            padding: 16px 20px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            flex: 1;
+        }
+        .game-progress-text {
+            font-family: var(--font-title);
+            font-size: .6rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--silver-dim);
+            text-align: center;
+            text-transform: uppercase;
+        }
+        .game-input-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-5px);
+            }
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(5px);
+            }
+        }
+        @keyframes sealBreak {
+            0% {
+                box-shadow: 0 0 0 0 rgba(160, 0, 0, .6);
+            }
+            50% {
+                box-shadow: 0 0 40px 12px rgba(160, 0, 0, .35), 0 0 80px 24px rgba(160, 0, 0, .12);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(160, 0, 0, 0);
+            }
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes pulseGlow {
+            0%,
+            100% {
+                box-shadow: 0 0 10px var(--blood-glow);
+            }
+            50% {
+                box-shadow: 0 0 25px var(--blood-glow), 0 0 50px rgba(160, 0, 0, .12);
+            }
+        }
+        @keyframes floatY {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-4px);
+            }
+        }
+        .anim-shake {
+            animation: shake .5s ease;
+        }
+        .anim-seal {
+            animation: sealBreak 1.2s ease;
+        }
+        .anim-fadeInUp {
+            animation: fadeInUp .6s ease both;
+        }
+        .anim-pulse {
+            animation: pulseGlow 2.5s ease infinite;
+        }
+        .anim-float {
+            animation: floatY 4s ease infinite;
+        }
+        @media(min-width:501px) {
+            body {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .app {
+                border-left: 1px solid var(--border);
+                border-right: 1px solid var(--border);
+            }
+        }
+        @media(prefers-reduced-motion:reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: .01ms !important;
+                transition-duration: .01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="ember-canvas" aria-hidden="true"></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="fog" aria-hidden="true"></div>
+    <div class="app" id="app">
+
+        <div id="screen-welcome" class="screen active" role="main">
+            <div class="screen-inner">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;text-align:center;padding:40px 24px">
+                    <div class="book-3d-wrap anim-pulse">
+                        <div class="book-3d">
+                            <div class="back-cover"></div>
+                            <div class="pages"></div>
+                            <div class="spine"></div>
+                            <div class="cover"></div>
+                        </div>
+                    </div>
+                    <div class="med-divider" style="width:50%"><i class="fas fa-dragon"></i></div>
+                    <p class="oracle-text anim-fadeInUp" style="animation-delay:.6s;max-width:300px">Diz teu nome, viajante, para que as sombras saibam quem ousa desafiar o Oráculo...</p>
+                    <div class="anim-fadeInUp" style="animation-delay:.8s;width:100%;max-width:300px">
+                        <input id="input-name" class="input-field" type="text" placeholder="Teu nome..." maxlength="20" autocomplete="off" aria-label="Nome do jogador">
+                    </div>
+                    <button id="btn-start" class="btn btn-primary anim-fadeInUp" style="animation-delay:1s;max-width:300px" disabled><i class="fas fa-scroll"></i> Iniciar Jornada</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-home" class="screen right" role="main">
+            <div class="screen-inner">
+                <header style="padding:20px 0 10px;text-align:center">
+                    <h1 class="title-main" style="font-size:clamp(1rem,4vw,1.25rem);letter-spacing:4px">O Caminho das Sombras</h1>
+                    <p class="title-sub" style="margin-top:3px;font-size:.5rem;letter-spacing:8px">Enigma</p>
+                </header>
+                <div class="profile-cover" id="profile-cover">
+                    <div class="cover-bg" id="cover-bg"></div>
+                    <div class="cover-vignette"></div>
+                    <div class="cover-fade"></div>
+                </div>
+                <div class="profile-avatar-wrap" id="home-avatar-container"></div>
+                <div class="profile-info">
+                    <div class="profile-name" id="home-name"></div>
+                    <div class="profile-title-text" id="home-title"></div>
+                    <div class="profile-tomos"><i class="fas fa-book-open" style="font-size:.6rem"></i><span id="home-tomos">0</span> Tomos</div>
+                </div>
+                <div class="med-divider" style="margin:16px 0 12px"><i class="fas fa-shield-halved"></i></div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                    <button class="btn btn-primary" id="btn-play"><i class="fas fa-dungeon"></i> Iniciar Jornada</button>
+                    <button class="btn btn-secondary" id="btn-wardrobe"><i class="fas fa-hat-wizard"></i> Guarda-Roupa Rúnico</button>
+                    <button class="btn btn-secondary" id="btn-ranking"><i class="fas fa-crown"></i> Ranking das Sombras</button>
+                </div>
+                <div class="med-divider" style="margin:16px 0 10px"><i class="fas fa-fire"></i></div>
+                <div id="home-titles" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center"></div>
+                <p style="text-align:center;font-size:.55rem;color:var(--silver-dim);margin-top:12px;font-style:italic">Jogadores no Reino: <span id="online-count" style="color:var(--gold);font-weight:700">1</span> &nbsp;|&nbsp; <span style="cursor:pointer;text-decoration:underline" id="btn-sync-rank">Sincronizar Reino</span></p>
+            </div>
+        </div>
+
+        <div id="screen-difficulty" class="screen right" role="main">
+            <div class="screen-inner">
+                <div style="padding-top:12px">
+                    <button class="btn btn-secondary btn-small" id="btn-diff-back" style="width:auto;margin-bottom:16px"><i class="fas fa-arrow-left"></i> Voltar</button>
+                    <h2 class="title-section" style="text-align:center;margin-bottom:4px">Escolhe teu Destino</h2>
+                    <p class="oracle-text" style="text-align:center;font-size:.85rem;color:var(--silver-dim);margin-bottom:20px">Quanto mais sombrio o caminho, maior a recompensa...</p>
+                    <div id="diff-cards" style="display:flex;flex-direction:column;gap:12px"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-game" class="screen right" role="main">
+            <div class="game-topbar">
+                <button class="back-btn" id="btn-game-back" aria-label="Voltar"><i class="fas fa-arrow-left"></i></button>
+                <div style="display:flex;align-items:center;gap:8px"><i class="fas fa-book-open" style="color:var(--gold);font-size:.75rem"></i><span id="game-tomos" style="font-family:var(--font-title);font-size:.8rem;font-weight:700;color:var(--gold);letter-spacing:2px">0</span></div>
+                <span id="game-diff-badge" class="badge badge-blood"></span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="game-progress"></div></div>
+            <div class="game-body">
+                <div class="game-progress-text" id="game-progress-text"></div>
+                <div class="game-progress-text" id="session-tomos-display" style="color:var(--gold);margin-top:4px">Tomos nesta jornada: 0</div>
+                <div class="book-deco">
+                    <span class="deco-img-wrap"><img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663565389825/dleSSZGciGxxOBju.png" class="deco-img anim-float" style="animation-delay:0s" alt="Pergaminho"></span>
+                    <span style="font-family:var(--font-display);font-weight:900;font-size:1rem;letter-spacing:5px;color:var(--silver-bright)">ORÁCULO</span>
+                    <span class="deco-img-wrap"><img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663565389825/JbLgMqnecwdlSJeq.png" class="deco-img anim-float" style="animation-delay:.5s" alt="Relíquia das Sombras"></span>
+                </div>
+                <div class="oracle-wrapper">
+                    <div class="scroll-curl-tl"></div><div class="scroll-curl-br"></div>
+                    <div class="oracle-card" id="oracle-card">
+                        <p class="oracle-text" id="riddle-text" style="text-align:center"></p>
+                        <div class="wax-seal" id="wax-seal"><i class="fas fa-feather-pointed"></i></div>
+                    </div>
+                </div>
+                <div id="hint-area"></div>
+                <div class="game-input-area" id="game-input-area">
+                    <input id="riddle-input" class="input-field" type="text" placeholder="Tua resposta..." autocomplete="off" aria-label="Resposta da charada">
+                    <div id="error-msg" class="error-text" style="display:none">O selo não rompeu... tente novamente</div>
+                    <div style="display:flex;gap:10px">
+                        <button class="btn btn-secondary btn-small" id="btn-hint" style="flex:1"><i class="fas fa-fire"></i> Pedir Luz</button>
+                        <button class="btn btn-primary btn-small" id="btn-submit" style="flex:2"><i class="fas fa-key"></i> Romper o Selo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-complete" class="screen right" role="main">
+            <div class="screen-inner"><div class="complete-content" id="complete-content"></div></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-wardrobe" role="dialog" aria-label="Guarda-Roupa Rúnico">
+        <div class="modal-sheet"><div class="modal-handle"></div><div style="padding:20px">
+            <h2 class="title-section" style="text-align:center;margin-bottom:4px">Guarda-Roupa Rúnico</h2>
+            <div class="med-divider" style="margin-bottom:14px"><i class="fas fa-shirt"></i></div>
+            <p style="text-align:center;font-size:.8rem;color:var(--silver-dim);font-style:italic;margin-bottom:14px">Desbloqueia avatares conquistando Tomos de Sabedoria</p>
+            <div class="avatar-grid" id="avatar-grid"></div>
+            <button class="btn btn-secondary btn-small" id="btn-wardrobe-close" style="margin-top:14px">Fechar</button>
+        </div></div>
+    </div>
+
+    <div class="modal-overlay" id="modal-ranking" role="dialog" aria-label="Ranking das Sombras">
+        <div class="modal-sheet"><div class="modal-handle"></div><div style="padding:20px">
+            <h2 class="title-section" style="text-align:center;margin-bottom:4px">Ranking das Sombras</h2>
+            <div class="med-divider" style="margin-bottom:16px"><i class="fas fa-crown"></i></div>
+            <p style="text-align:center;font-size:.65rem;color:var(--silver-dim);font-style:italic;margin-bottom:8px">Ranking compartilhado entre todos os jogadores</p>
+            <div class="card" id="ranking-list" style="overflow:hidden"></div>
+            <button class="btn btn-secondary btn-small" id="btn-ranking-refresh" style="margin-top:12px"><i class="fas fa-sync-alt"></i> Atualizar Ranking</button>
+            <button class="btn btn-secondary btn-small" id="btn-ranking-close" style="margin-top:8px">Fechar</button>
+        </div></div>
+    </div>
+
+    <div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+    <script>
+        const AVATARS = [
+            { id: 'explorer', name: 'Anão Explorador', unlock: 0, img: 'https://z-cdn-media.chatglm.cn/files/c9d7260d-0ee7-4287-a3e4-f1e64b0fb735.png?auth_key=1880411692-a114d9ec6da84d1bbf5505ff4c0dcb12-0-ed63dd2f56f0beb0821fdaa424d50578', icon: 'fa-person-hiking', gradient: 'linear-gradient(135deg,#5D4037,#3E2723)' },
+            { id: 'hermit', name: 'Sábio Eremita', unlock: 100, img: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663565389825/cMJeADLpbxsqmwWY.png', icon: 'fa-hat-wizard', gradient: 'linear-gradient(135deg,#4A148C,#1A0033)' },
+            { id: 'knight', name: 'Cavaleiro Negro', unlock: 250, img: 'https://z-cdn-media.chatglm.cn/files/d8b67b5e-1f0d-4bf6-b166-64faad3be734.png?auth_key=1880411692-54539c332f6643f3af8e15572a0f1f3a-0-95d0a198637175b550fe3cc0f791fe14', icon: 'fa-shield-halved', gradient: 'linear-gradient(135deg,#37474F,#1A1A2E)' },
+            { id: 'paladin', name: 'Paladino Dourado', unlock: 450, img: 'https://z-cdn-media.chatglm.cn/files/8003de5c-5f42-4e35-b3de-83080ef1a554.png?auth_key=1880411692-3c5a468262ac494ba38b70b400978945-0-da26639a64a92c1601b2827be854cbcb', icon: 'fa-sun', gradient: 'linear-gradient(135deg,#B8860B,#6B4F00)' },
+            { id: 'valkyrie', name: 'Valquíria Rúnica', unlock: 600, img: 'https://z-cdn-media.chatglm.cn/files/f38f7460-240c-4bd6-9643-6a2209e6919f.png?auth_key=1880411692-0e9dcf938bbf4b2b9cf9ad01ac2a43c5-0-efe0958f1f5110dda1d661202551fe2f', icon: 'fa-feather-pointed', gradient: 'linear-gradient(135deg,#1565C0,#0A2E5C)' },
+            { id: 'samurai', name: 'Mestre Samurai', unlock: 900, img: 'https://z-cdn-media.chatglm.cn/files/4fe5c6df-19bc-41de-827f-7cb06f34e554.png?auth_key=1880411692-bbb3b194347249578bbec737aa8eb87f-0-8f1dc14ac601c922735b7cff160a02bb', icon: 'fa-torii-gate', gradient: 'linear-gradient(135deg,#B71C1C,#5F0000)' },
+            { id: 'dragon', name: 'Rei Dragão', unlock: 1000, img: 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663565389825/zikZoGPZGXKJMVir.png', icon: 'fa-dragon', gradient: 'linear-gradient(135deg,#8B0000,#1A0000)' },
+            
+            { id: 'spectral', name: 'Griffon do Vazio', unlock: 1400, img: 'griffon.png', icon: 'fa-ghost', gradient: 'linear-gradient(135deg,#1a1a2e,#0d0d1a)' },
+            { id: 'archmage', name: 'Arqueiro Arcano', unlock: 1700, img: 'arqueiro.png', icon: 'fa-wand-magic-sparkles', gradient: 'linear-gradient(135deg,#2E1065,#4C1D95)' },
+            { id: 'demon', name: 'Cavaleiro Demoníaco', unlock: 2000, img: 'cavaleiro.png', icon: 'fa-fire-flame-curved', gradient: 'linear-gradient(135deg,#3B0000,#1A0000)' },
+            { id: 'void_lord', name: 'Bruxa do Abismo', unlock: 2400, img: 'maga.png', icon: 'fa-circle-radiation', gradient: 'linear-gradient(135deg,#0a001a,#1a0033)' },
+            { id: 'void_lord', name: 'Esqueleto do Abismo', unlock: 2800, img: 'skeleto.png', icon: 'fa-circle-radiation', gradient: 'linear-gradient(135deg,#0a001a,#1a0033)' },
+
+        ];
+        const TITLES = [
+            { name: 'Anão Explorador', min: 0 }, { name: 'Sábio Eremita', min: 100 }, { name: 'Cavaleiro Negro', min: 250 },
+            { name: 'Paladino Dourado', min: 450 }, { name: 'Valquíria Rúnica', min: 600 }, { name: 'Mestre Samurai', min: 900 },
+            { name: 'Rei Dragão', min: 1000 }, { name: 'Espectro do Vazio', min: 1400 }, { name: 'Arquimago Arcano', min: 1700 },
+            { name: 'Senhor Demoníaco', min: 2000 }, { name: 'Guardião Celestial', min: 2400 }, { name: 'Senhor do Abismo', min: 2800 }
+        ];
+
+        const RIDDLES = {
+            MONTANHA_ANOES: [
+                { q: 'Corto rocha e madeira, mordo sem boca, nas mãos do anão sou rei.', a: 'machado', alt: ['machados','machadinha'], h: 'Arma ou ferramenta básica.', r: 8 },
+                { q: 'Brilho sob a terra, mas não sou o sol. Reis matam por mim.', a: 'ouro', alt: ['moedas','riqueza'], h: 'Metal precioso amarelo.', r: 8 },
+                { q: 'Sofro golpes o dia todo, mas nunca quebro. Moldo o destino do metal.', a: 'bigorna', alt: ['bigornas'], h: 'Ferramenta pesada do ferreiro.', r: 9 },
+                { q: 'Cresço no rosto do guerreiro. Quanto mais longa e velha, mais honrada.', a: 'barba', alt: ['barbas'], h: 'Orgulho supremo dos anões.', r: 8 },
+                { q: 'Líquido dourado com espuma branca que cura o cansaço na taverna.', a: 'cerveja', alt: ['chopp','bebida','hidromel'], h: 'Feita de malte e lúpulo.', r: 8 },
+                { q: 'Beijo a rocha dura para extrair os tesouros do mundo.', a: 'picareta', alt: ['picaretas','piquareta','picareta de mineracao'], h: 'Ferramenta essencial de mineração.', r: 8 },
+                { q: 'Negro como a noite, morro no fogo para aquecer a grande forja.', a: 'carvão', alt: ['hulha','carvões','carvao'], h: 'Combustível antigo tirado da terra.', r: 9 },
+                { q: 'Mais duro que o ferro, brilho puro no escuro da mina profunda.', a: 'diamante', alt: ['brilhante','joia','diamantes'], h: 'Pedra preciosa indestrutível.', r: 9 },
+                { q: 'Estrada sem céu, rasgada na pedra pelas picaretas.', a: 'túnel', alt: ['túneis','galeria','tuneis','tunel'], h: 'Caminho subterrâneo.', r: 9 },
+                { q: 'Canto alto na oficina, batendo e dando forma ao ferro quente.', a: 'martelo', alt: ['marreta','martelos','martelada'], h: 'Bate diretamente na bigorna.', r: 8 },
+                { q: 'Sangue da montanha, quando purificado viro espada e armadura.', a: 'ferro', alt: ['metal','aco','aço'], h: 'O elemento base da metalurgia.', r: 8 },
+                { q: 'Sol portátil dos mineiros, guio os passos nas galerias escuras.', a: 'lanterna', alt: ['lamparina','tocha','luz'], h: 'Traz luz para a escavação.', r: 8 },
+                { q: 'Fragmento de céu azul escondido no coração da pedra bruta.', a: 'safira', alt: ['joia','gema','safiras'], h: 'Pedra preciosa azul.', r: 10 },
+                { q: 'Gota de sangue petrificada na rocha mais profunda.', a: 'rubi', alt: ['joia','gema','rubis'], h: 'Pedra preciosa vermelha.', r: 10 },
+                { q: 'Procuro o que não vejo, deixando buracos imensos para trás.', a: 'escavação', alt: ['mineração','garimpo','escavacao'], h: 'O trabalho diário do clã.', r: 10 },
+                { q: 'Irmã menor do ouro, brilho suave como o luar sob a terra.', a: 'prata', alt: ['metal','pratas'], h: 'Metal precioso claro.', r: 9 },
+                { q: 'Vidro da terra que cresce sozinho no escuro absoluto.', a: 'cristal', alt: ['cristais','quartzo'], h: 'Formação mineral geométrica e brilhante.', r: 9 },
+                { q: 'Coração quente da montanha onde as armas lendárias nascem.', a: 'forja', alt: ['fornalha','oficina','forjas'], h: 'O lugar de trabalho do ferreiro.', r: 9 },
+                { q: 'Sopro de ar forte sem ter pulmões, avivando o fogo sagrado.', a: 'fole', alt: ['foles','sopro'], h: 'Alimenta as chamas da fornalha.', r: 10 },
+                { q: 'Parede movediça que seguro no braço para barrar o golpe do orc.', a: 'escudo', alt: ['escudos','protecao'], h: 'Equipamento de defesa de metal ou madeira.', r: 9 },
+                { q: 'Coroa de ferro que protege as ideias e a cabeça do guerreiro.', a: 'capacete', alt: ['elmo','casco','capacetes'], h: 'Armadura para a parte superior.', r: 8 },
+                { q: 'Letras talhadas na pedra que guardam a magia e a história antiga.', a: 'runas', alt: ['runa','escrita','letras'], h: 'O alfabeto antigo dos anões.', r: 10 },
+                { q: 'Respondo na caverna escura, mas não tenho língua própria.', a: 'eco', alt: ['ecos','som'], h: 'Repete o som do seu martelo.', r: 9 },
+                { q: 'Duro e frio quando descansado, choro chamas quando aquecido.', a: 'metal', alt: ['ferro','aço','aco','metais'], h: 'Matéria-prima de toda a forja.', r: 9 },
+                { q: 'Sala sem janelas nem portas, esculpida pelo tempo na rocha viva.', a: 'caverna', alt: ['gruta','cavernas'], h: 'O imenso lar subterrâneo.', r: 9 }
+            ],
+            PANTANO_SOMBRAS: [
+                { q: 'Manto cinzento e úmido que esconde os caminhos e cega os olhos.', a: 'nevoeiro', alt: ['névoa','neblina','nevoa','nevua'], h: 'Flutua sobre as águas paradas.', r: 11 },
+                { q: 'Terra molhada e traiçoeira que prende os pés do viajante desatento.', a: 'lama', alt: ['barro','lodo','lamaçal'], h: 'O chão macio e perigoso do pântano.', r: 11 },
+                { q: 'Luz enganosa que dança na noite, guiando os tolos para o abismo.', a: 'fogo-fátuo', alt: ['fogo fatuo','luz','fogofatuo'], h: 'Chama azulada que flutua.', r: 13 },
+                { q: 'Tapete verde e gosmento que cresce na casca das árvores podres.', a: 'musgo', alt: ['limo','musgos','musgu'], h: 'Planta rasteira que ama a umidade.', r: 11 },
+                { q: 'Líquido silencioso obtido de sapos e cobras, mata sem cortar.', a: 'veneno', alt: ['toxina','peçonha','peçonhento','venenu'], h: 'Muitas criaturas o usam nas presas.', r: 12 },
+                { q: 'Bebo teu sangue quente sem ter dentes, grudada na tua pele.', a: 'sanguessuga', alt: ['verme','vampiro','sanguessugas','sanguisuga'], h: 'Pequeno monstro aquático.', r: 12 },
+                { q: 'Tronco de árvore que ganha dentes e olhos famintos na margem.', a: 'jacaré', alt: ['crocodilo','lagarto','jacare'], h: 'Predador camuflado na água suja.', r: 11 },
+                { q: 'O cheiro do tempo destruindo a carne e a madeira na água paralisada.', a: 'podridão', alt: ['decomposição','podridao','decomposicao'], h: 'O destino de tudo o que morre aqui.', r: 13 },
+                { q: 'Quanto mais lutas contra mim, mais fundo te puxo para o meu estômago.', a: 'areia-movediça', alt: ['areia movedica','lama','areiamovedica'], h: 'Solo que engole viajantes.', r: 13 },
+                { q: 'Dedos de madeira retorcida que brotam do lodo para te fazer cair.', a: 'raiz', alt: ['raízes','raizes','raiz de arvore'], h: 'Sustenta as árvores na água.', r: 11 },
+                { q: 'Corda viva que rasteja sem pernas e esconde a morte num dente.', a: 'cobra', alt: ['serpente','víbora','vibora','cobras'], h: 'Rasteja silenciosa entre os juncos.', r: 11 },
+                { q: 'Entro limpo e seco no pântano, saio pesado, cinzento e imundo.', a: 'sapato', alt: ['bota','botas','sapatos','calcado'], h: 'Proteção para os teus pés.', r: 11 },
+                { q: 'Canto desafinado na noite escura, dou saltos longos no lodo verde.', a: 'sapo', alt: ['rã','perereca','ra','sapos'], h: 'Anfíbio barulhento de pele úmida.', r: 11 },
+                { q: 'Nuvem barulhenta que zumbe no teu ouvido buscando teu sangue.', a: 'inseto', alt: ['mosquito','pernilongo','insetos','mosquitos'], h: 'Pequeno voador voraz.', r: 11 },
+                { q: 'Escorregadio como o sabão, verde e denso sobre as pedras úmidas.', a: 'limo', alt: ['lodo','lodo verde','limu'], h: 'Acúmulo vegetal nas águas rasas.', r: 12 },
+                { q: 'Sigo teus passos por entre as árvores, sumindo quando a névoa fecha.', a: 'sombra', alt: ['sombras','sombra escura'], h: 'Sua própria projeção escura.', r: 12 },
+                { q: 'Planta alta e oca que dança com o vento na beira da água paralisada.', a: 'junco', alt: ['planta','capim','juncu'], h: 'Usado às vezes para fazer cestos.', r: 12 },
+                { q: 'Lugar ou clima onde o sol nunca consegue tocar o solo.', a: 'sombrio', alt: ['escuro','trevas','sombriu'], h: 'Adjetivo do pântano.', r: 12 },
+                { q: 'Água grossa, verde e morna que nenhum mortal ousaria beber.', a: 'sopa', alt: ['caldo','sopa verde','sopa de pantano'], h: 'Uma descrição metafórica da água local.', r: 13 },
+                { q: 'Guarda-chuva misterioso que nasce da terra podre em uma noite.', a: 'cogumelo', alt: ['fungo','cogumelos','cogumelu'], h: 'Pode te alimentar ou te matar.', r: 12 },
+                { q: 'Olhos grandes que observam tudo do alto de um galho seco.', a: 'coruja', alt: ['ave','pássaro','passaro','corujas'], h: 'Predador voador da noite.', r: 11 },
+                { q: 'Árvore de galhos caídos que parecem chorar sobre o lodo.', a: 'salgueiro', alt: ['salgueiro-chorão','salgueiro chorao','arvore'], h: 'Vegetação típica de zonas úmidas.', r: 13 },
+                { q: 'Venho sem aviso quando algo toca tua perna por baixo da água suja.', a: 'susto', alt: ['medo','terror','sustu'], h: 'Uma emoção repentina de alerta.', r: 12 },
+                { q: 'Subo da lama profunda para estourar na superfície com mau cheiro.', a: 'bolha', alt: ['bolhas','bolha de gas'], h: 'Esfera cheia de gás do pântano.', r: 12 },
+                { q: 'Caminho enganoso onde todas as árvores e águas parecem iguais.', a: 'labirinto', alt: ['perdição','perdicao','labirintu'], h: 'Difícil encontrar a saída.', r: 13 }
+            ],
+            FORTALEZA: [
+                { q: 'Corpo gigante de pedra que abraça o castelo contra os invasores.', a: 'muralha', alt: ['muro','paredão','muralhas','paredao'], h: 'A principal barreira defensiva.', r: 14 },
+                { q: 'Gigante vertical que vigia o horizonte para ver o inimigo chegar.', a: 'torre', alt: ['torres','torre de vigia'], h: 'Estrutura alta para os arqueiros.', r: 14 },
+                { q: 'Boca imensa de madeira e ferro que escolhe quem entra no reino.', a: 'portão', alt: ['porta','portões','portao','portoes'], h: 'A entrada principal fortificada.', r: 14 },
+                { q: 'Fosso profundo cheio de água que separa os muros da terra firme.', a: 'fosso', alt: ['canal','vala','fossu'], h: 'Impede o avanço direto dos soldados.', r: 14 },
+                { q: 'Língua de madeira que desce para os aliados e sobe para os rivais.', a: 'ponte-levadiça', alt: ['ponte levadica','ponte','pontelevadica'], h: 'Cruza o fosso de água.', r: 15 },
+                { q: 'Tecido que voa alto na torre mais alta, mostrando os símbolos do lorde.', a: 'estandarte', alt: ['bandeira','flâmula','estandartes','flamula'], h: 'Representa a honra do reino.', r: 14 },
+                { q: 'Feita de anéis de ferro unidos, seguro barcos, portões ou traidores.', a: 'corrente', alt: ['correntes','grilhão','correntes de ferro','grilhao'], h: 'Puxa pesos ou prende homens.', r: 14 },
+                { q: 'Chuva fina e mortal que cai das ameias para rasgar o peito inimigo.', a: 'flecha', alt: ['flechas','seta','flexa'], h: 'Munição dos defensores de arco.', r: 14 },
+                { q: 'O aposento mais frio, escuro e profundo, abaixo dos pés do rei.', a: 'masmorra', alt: ['calabouço','prisão','masmorras','calabouco','prisao'], h: 'Onde os criminosos apodrecem.', r: 14 },
+                { q: 'Olhos atentos na noite fria que não podem piscar sobre o muro.', a: 'guarda', alt: ['sentinela','soldado','guardas'], h: 'O defensor de plantão.', r: 14 },
+                { q: 'Braço de madeira gigante que lança pedras imensas contra o cerco.', a: 'catapulta', alt: ['trebuchet','engenho','catapultas'], h: 'Arma de arremesso antiga.', r: 15 },
+                { q: 'Bracelete pesado de ferro que prende o prisioneiro na parede fria.', a: 'grilhão', alt: ['algema','corrente','grilhao','algemas'], h: 'Evita a fuga nas masmorras.', r: 15 },
+                { q: 'Voz de bronze ou chifre que avisa o castelo que a guerra começou.', a: 'trombeta', alt: ['corneta','buzina','trombetas'], h: 'Instrumento musical de sopro militar.', r: 14 },
+                { q: 'Barra pesada atrás da porta de madeira que nenhum homem move sozinho.', a: 'tranca', alt: ['ferrolho','trancas','ferrolhos'], h: 'Mantém o portão fechado por dentro.', r: 14 },
+                { q: 'Segunda pele feita de metal que protege o coração do cavaleiro.', a: 'armadura', alt: ['cota de malha','armaduras','cota'], h: 'Veste-se para a batalha.', r: 14 },
+                { q: 'A peça mais protegida do castelo, usa ouro na cabeça mas não luta.', a: 'rei', alt: ['lorde','monarca','reis'], h: 'O governante máximo da fortaleza.', r: 14 },
+                { q: 'Porta horizontal escondida no chão que leva aos túneis secretos.', a: 'alçapão', alt: ['alcapão','alcapao'], h: 'Esconde passagens ou celas.', r: 15 },
+                { q: 'Dentes de pedra no topo da muralha onde os arqueiros se escondem.', a: 'ameia', alt: ['ameias','parapeito','ameias de pedra'], h: 'Recortes para proteção e tiro.', r: 15 },
+                { q: 'Caminho de degraus de pedra que sobe em espiral até o céu da torre.', a: 'escadaria', alt: ['escada','escadarias'], h: 'Permite subir os andares.', r: 14 },
+                { q: 'Espera cruel do lado de fora, onde o tempo e a fome tentam vencer o muro.', a: 'cerco', alt: ['bloqueio','cercu'], h: 'Estratégia militar de isolamento.', r: 16 },
+                { q: 'Cadeira de ouro e veludo de onde emanam as leis e sentenças.', a: 'trono', alt: ['assento real','tronos'], h: 'Lugar exclusivo do rei.', r: 14 },
+                { q: 'Fogo preso na parede de pedra que ilumina os corredores escuros.', a: 'tocha', alt: ['tochas','fogo'], h: 'Madeira e óleo acesos.', r: 14 },
+                { q: 'Ação de observar o horizonte em busca de fumaça inimiga.', a: 'vigia', alt: ['sentinela','vigias'], h: 'Estar atento ao perigo.', r: 14 },
+                { q: 'Orelha secreta que escuta os planos do lorde nas sombras do salão.', a: 'espiã', alt: ['espião','traidor','espia','espiao'], h: 'Infiltrado trabalhando para o rival.', r: 15 },
+                { q: 'Grande mesa cheia de carne e vinho celebrando a vitória no cerco.', a: 'banquete', alt: ['festa','jantar','banquetes'], h: 'Festa com muita comida.', r: 14 }
+            ],
+            COVIL_DRAGOES: [
+                { q: 'Sopro de morte escarlate que derrete o ferro e transforma tudo em pó.', a: 'fogo', alt: ['chama','chamas','fogu'], h: 'A arma elemental da besta.', r: 16 },
+                { q: 'Armadura natural, brilhante e dura, que cobre a pele do monstro.', a: 'escama', alt: ['escamas','escamas de dragao'], h: 'Cobre o corpo de répteis gigantes.', r: 16 },
+                { q: 'Cama de moedas antigas e joias onde a criatura dorme por séculos.', a: 'tesouro', alt: ['ouro','riquezas','tesouros'], h: 'A fortuna acumulada pelo monstro.', r: 16 },
+                { q: 'Nuvem cinzenta e quente que escapa do topo da montanha do monstro.', a: 'fumaça', alt: ['fumaca','fumo'], h: 'Indica que a besta está respirando.', r: 16 },
+                { q: 'O pó cinzento que resta dos guerreiros que tentaram me enfrentar.', a: 'cinza', alt: ['cinzas','cinzas de fogo'], h: 'Resíduo de tudo que o fogo queimou.', r: 16 },
+                { q: 'Asas gigantes de couro que escondem o sol quando cruzo as nuvens.', a: 'asa', alt: ['asas','asas de dragao'], h: 'Membros usados para voar.', r: 16 },
+                { q: 'Cheiro de pedra amarela vulcânica que queima na minha garganta.', a: 'enxofre', alt: ['sulfur','enxofres'], h: 'Elemento químico ligado a vulcões.', r: 18 },
+                { q: 'Cinco lâminas afiadas em cada pata, rasgam escudos como papel.', a: 'garra', alt: ['garras','garras afiadas'], h: 'As unhas mortais do dragão.', r: 16 },
+                { q: 'Grito terrível que faz a montanha tremer e o coração do herói parar.', a: 'rugido', alt: ['grito','urro','rugidu'], h: 'O som de fúria do monstro.', r: 17 },
+                { q: 'Pedra viva, redonda e quente que guarda o herdeiro dos céus.', a: 'ovo', alt: ['ovos','ovo de dragao'], h: 'De onde nasce o pequeno monstro.', r: 17 },
+                { q: 'Restos brancos espalhados pelo chão, armaduras vazias sem carne.', a: 'esqueleto', alt: ['ossos','esqueletos'], h: 'O que sobrou dos antigos caçadores.', r: 17 },
+                { q: 'Chicote imenso coberto de espinhos que derruba pilares com um golpe.', a: 'cauda', alt: ['rabo','caudas'], h: 'A parte traseira do corpo do dragão.', r: 16 },
+                { q: 'Mortal audaz que entra na caverna buscando glória e encontra fogo.', a: 'caçador', alt: ['herói','cavaleiro','cacador','heroi'], h: 'Aquele que tenta matar a besta.', r: 17 },
+                { q: 'Mormaço sufocante que enche a caverna antes mesmo de ver o monstro.', a: 'calor', alt: ['mormaço','mormaco','calor intenso'], h: 'Temperatura extrema do ambiente.', r: 16 },
+                { q: 'Vivo desde o início dos reinos, vi impérios caírem enquanto dormia.', a: 'ancião', alt: ['velho','antigo','anciao'], h: 'A extrema idade das grandes feras.', r: 18 },
+                { q: 'Fome de possuir todo o ouro do mundo, mesmo sem gastar uma moeda.', a: 'ganância', alt: ['ambição','ganancia','ambicao'], h: 'O pecado que define o dragão e o ladrão.', r: 18 },
+                { q: 'Entrada escura na rocha vulcânica que leva ao coração do perigo.', a: 'caverna', alt: ['covil','gruta','cavernas'], h: 'O lar do monstro cuspidor de fogo.', r: 16 },
+                { q: 'Cor do sangue fresco e das escamas das feras mais violentas.', a: 'vermelho', alt: ['rubro','vermelha'], h: 'A cor clássica do dragão de fogo.', r: 16 },
+                { q: 'O que acontece com a lâmina de ferro sob o sopro direto da fera.', a: 'fusão', alt: ['derretimento','fusao'], h: 'Mudar de estado sólido para líquido.', r: 18 },
+                { q: 'Espada branca dentro da boca da besta, rasga cavalos com uma mordida.', a: 'dente', alt: ['dentes','presa','presas'], h: 'Peça de mastigação do monstro.', r: 16 },
+                { q: 'Status da criatura, considerada a rainha absoluta de todos os monstros.', a: 'realeza', alt: ['soberania','realez'], h: 'Lugar no topo da cadeia alimentar mítica.', r: 18 },
+                { q: 'Brilho lapidado que decora o peito da fera de tanto deitar sobre o ouro.', a: 'joia', alt: ['gema','rubi','joias'], h: 'Pedras preciosas coladas na pele.', r: 17 },
+                { q: 'Vidro vulcânico negro e afiado como navalha, nascido do calor do covil.', a: 'obsidiana', alt: ['pedra','obsidianas'], h: 'Rocha gerada por resfriamento rápido.', r: 19 },
+                { q: 'O fogo não me toca, a lava é meu banho, as chamas não me ferem.', a: 'imunidade', alt: ['resistência','resistencia'], h: 'Característica de não sofrer dano por calor.', r: 19 },
+                { q: 'O ato de esvaziar os pulmões transformando uma vila em cinzas.', a: 'sopro', alt: ['ataque','sopros'], h: 'Como o monstro lança seu elemento.', r: 17 }
+            ],
+            NECROPOLE_REIS: [
+                { q: 'Caixa de pedra ricamente esculpida onde o monarca dorme para sempre.', a: 'sarcófago', alt: ['caixão','tumba','sarcofago','caixao'], h: 'Guarda os restos mortais do rei.', r: 21 },
+                { q: 'O pó cinzento que cobriu as roupas de seda e as coroas dos antigos.', a: 'poeira', alt: ['pó','po','poeiras'], h: 'Cobre tudo no túmulo esquecido.', r: 21 },
+                { q: 'Aro de ouro que repousa sobre um crânio vazio de carne.', a: 'coroa', alt: ['diadema','coroas'], h: 'Símbolo de poder que sobrevive à carne.', r: 21 },
+                { q: 'Sala subterrânea fria, cheia de nichos com reis adormecidos.', a: 'cripta', alt: ['catacumba','criptas'], h: 'O quarto dos mortos reais.', r: 21 },
+                { q: 'Exército sem pele nem fome que vigia os corredores da necrópole.', a: 'esqueleto', alt: ['ossos','morto-vivo','esqueletos','mortovivo'], h: 'Guerreiros feitos de puro osso.', r: 21 },
+                { q: 'Feitiço invisível lançado sobre o ouro dos mortos contra ladrões.', a: 'maldição', alt: ['maldicao','praga','maldições'], h: 'Castigo mágico para profanadores.', r: 22 },
+                { q: 'A única lei sagrada deste lugar, interrompida apenas pelos vivos.', a: 'silêncio', alt: ['silencio','silenciu'], h: 'Ausência total de sons.', r: 21 },
+                { q: 'Sombra flutuante de um lorde antigo que não aceitou o fim do reinado.', a: 'fantasma', alt: ['espectro','alma','fantasmas'], h: 'Espírito penado que vaga na tumba.', r: 22 },
+                { q: 'Queimo com uma chama azulada quando há mortos se movendo por perto.', a: 'vela', alt: ['velas','velas de cera'], h: 'Feita de cera, usada para iluminar ritual.', r: 21 },
+                { q: 'Corpo real preservado, enrolado em faixas de linho e resina antiga.', a: 'múmia', alt: ['mumia','cadáver','mumias','cadaver'], h: 'Cadáver que não apodreceu.', r: 22 },
+                { q: 'Frase gravada na entrada da tumba contando os feitos do defunto.', a: 'epitáfio', alt: ['epitafio','inscrição','inscricao'], h: 'As últimas palavras sobre a pedra.', r: 23 },
+                { q: 'Fios cinzentos tecidos pelo tempo e por insetos nos cantos das celas.', a: 'teia', alt: ['teias','teia de aranha','teias de aranha'], h: 'Feita por aranhas que habitam o local.', r: 21 },
+                { q: 'Feita de osso humano, abre os segredos escondidos nos portões da cripta.', a: 'chave', alt: ['chaves','chave de osso'], h: 'Instrumento para abrir trancas.', r: 21 },
+                { q: 'Erva queimada que enche o ar com cheiro forte para tapar a morte.', a: 'incenso', alt: ['perfume','incensos'], h: 'Gera uma fumaça aromática ritualística.', r: 22 },
+                { q: 'O que os filhos ganham quando o rei morre e vai para o túmulo.', a: 'herança', alt: ['heranca','trono','herancas'], h: 'Bens deixados pelo falecido.', r: 22 },
+                { q: 'Caminhos de falsos túmulos feitos para perder saqueadores de ouro.', a: 'labirinto', alt: ['túneis','labirintos','tuneis'], h: 'Arquitetura confusa de proteção.', r: 22 },
+                { q: 'Mago profano que profana o sono dos soberanos para erguer lacaios.', a: 'necromante', alt: ['bruxo','mago negro','necromantes'], h: 'Aquele que controla os mortos.', r: 23 },
+                { q: 'Pedras preciosas brilhantes colocadas nas órbitas vazias do crânio.', a: 'olho', alt: ['olhos','gemas','olhos de cadaver'], h: 'Simula a visão do morto real.', r: 22 },
+                { q: 'Bastão de ouro real que hoje serve apenas para apoiar teias.', a: 'cetro', alt: ['bastão','bastao','cetros'], h: 'Símbolo de comando de mão.', r: 22 },
+                { q: 'A companheira constante de quem foi enterrado longe da luz do sol.', a: 'escuridão', alt: ['escuridao','trevas','escuridao'], h: 'Ausência completa de luz.', r: 21 },
+                { q: 'A carne fria que perdeu a alma e o direito de governar.', a: 'cadáver', alt: ['cadaver','corpo','corpos'], h: 'O resto mortal antes de virar osso.', r: 21 },
+                { q: 'Arte de secar e perfumar o corpo do monarca para durar milênios.', a: 'embalsamamento', alt: ['mumificação','mumificacao'], h: 'Processo funerário de preservação.', r: 24 },
+                { q: 'Vinhos antigos e joias deixados ao lado do caixão para o além.', a: 'oferecimento', alt: ['oferenda','tributo','oferencimento'], h: 'Presentes dados aos mortos.', r: 23 },
+                { q: 'Palácio superficial construído apenas para guardar um homem morto.', a: 'mausoléu', alt: ['mausoleu','túmulo','mausoleus','tumulo'], h: 'Monumento funerário imponente.', r: 23 },
+                { q: 'Fio que as bruxas do destino cortaram para fazer o rei cair.', a: 'linha', alt: ['fio da vida','linhas'], h: 'Metáfora do fim da existência humana.', r: 23 }
+            ],
+            ABISMO_ANTIGOS: [
+                { q: 'Não há ar, não há luz, não há chão. O vazio que tudo consome.', a: 'vácuo', alt: ['vacuo','vazio','vazio absoluto'], h: 'O espaço sem nenhuma matéria.', r: 32 },
+                { q: 'O lugar definitivo para onde vão os deuses quando não restam devotos.', a: 'esquecimento', alt: ['oblívio','oblivio'], h: 'Apagar por completo da memória.', r: 32 },
+                { q: 'O preço que o sábio paga por ler as estrelas que não deveriam existir.', a: 'insanidade', alt: ['loucura','insanidadi'], h: 'A perda total da razão mental.', r: 33 },
+                { q: 'Membro sem ossos que se move na escuridão do espaço profundo.', a: 'tentáculo', alt: ['tentaculo','tentáculos','tentaculos'], h: 'Apêndice das entidades antigas.', r: 32 },
+                { q: 'Uma prisão sem trancas ou paredes onde o tempo se recusa a andar.', a: 'eternidade', alt: ['infinito','eternidadi'], h: 'Duração que nunca terá um fim.', r: 32 },
+                { q: 'Visão terrível enviada pelas mentes adormecidas no fundo do abismo.', a: 'pesadelo', alt: ['pesadelos','pesadelu'], h: 'Sonho terrível que causa horror.', r: 32 },
+                { q: 'Fardo invisível que destrói quem descobre como o universo foi feito.', a: 'conhecimento', alt: ['saber','verdade','conhecimentu'], h: 'Informação proibida aos mortais.', r: 33 },
+                { q: 'Abro no meio do nada, observando teus passos sem ter rosto.', a: 'olho', alt: ['olhos','visão','visao','olhos abertos'], h: 'O símbolo da vigília ancestral.', r: 32 },
+                { q: 'O estado do universo antes da primeira palavra de ordem ser dita.', a: 'caos', alt: ['desordem','caos primordial'], h: 'Mistura primordial sem regras.', r: 32 },
+                { q: 'O estrondo da criação distorcido que ressoa no vácuo até hoje.', a: 'eco', alt: ['ecos','eco do vacuo'], h: 'Som que ricocheteia no infinito.', r: 33 },
+                { q: 'Força invisível que esmaga teus ossos e puxa estrelas para o fundo.', a: 'gravidade', alt: ['atração','atracao'], h: 'Distorção do espaço pelo peso.', r: 33 },
+                { q: 'A mudança bizarra da carne quando exposta aos fluidos do vazio.', a: 'mutação', alt: ['mutaçao','transformação','mutacao','transformacao'], h: 'Alteração aberrante da forma.', r: 34 },
+                { q: 'A verdade que os deuses antigos esconderam atrás do fim do mundo.', a: 'segredo', alt: ['segredos','segredus'], h: 'Algo ocultado desde o início.', r: 32 },
+                { q: 'Não tenho fundo. Quanto mais cais, mais distante ficas do início.', a: 'profundidade', alt: ['abismo','profundidadi'], h: 'A medida vertical do infinito para baixo.', r: 33 },
+                { q: 'Uma afirmação que destrói a si mesma, rasgando a lógica dos sábios.', a: 'paradoxo', alt: ['contradição','paradoxos','contradicao'], h: 'Frase que é verdadeira e falsa.', r: 34 },
+                { q: 'O ponto exato onde o nada decidiu virar tudo, esquecido por todos.', a: 'origem', alt: ['início','começo','inicio','comeco'], h: 'A fonte primordial de tudo.', r: 33 },
+                { q: 'O que os mortais chamam de realidade, vista de fora do universo.', a: 'ilusão', alt: ['ilusao','mentira','ilusões'], h: 'Falsa percepção da existência.', r: 33 },
+                { q: 'A lei que diz que até as estrelas vão cansar, esfriar e morrer.', a: 'entropia', alt: ['decadência','decadencia','entropias'], h: 'Tendência natural do caos cósmico.', r: 35 },
+                { q: 'Uma linha reta inventada pelos homens que os Antigos dobram como papel.', a: 'tempo', alt: ['cronos','tempu'], h: 'A dimensão que mede o envelhecimento.', r: 32 },
+                { q: 'Quando a lua ou uma sombra gigante engole o sol trazendo o medo puro.', a: 'eclipse', alt: ['ocultação','eclipsi','ocultacao'], h: 'Alinhamento de astros que gera trevas.', r: 32 },
+                { q: 'A linguagem dos deuses que dormem; se eles falarem, o mundo acaba.', a: 'silêncio', alt: ['silencio','silenciu'], h: 'Ausência completa de comunicação.', r: 32 },
+                { q: 'A fórmula geométrica não humana que abre os portões externos.', a: 'chave', alt: ['portal','chaves'], h: 'O meio abstrato de abrir o abismo.', r: 34 },
+                { q: 'O vislumbre da verdade cósmica que liberta a alma e quebra a mente.', a: 'revelação', alt: ['revelacao','revelações'], h: 'Ato de descobrir o oculto absoluto.', r: 34 },
+                { q: 'O que não muda, não depende de nada e engloba o fim e o início.', a: 'absoluto', alt: ['totalidade','absolutus'], h: 'Conceito filosófico da verdade pura.', r: 35 },
+                { q: 'Eu sou a pergunta sem resposta que o abismo faz a quem olha para ele.', a: 'enigma', alt: ['charada','mistério','enigmas','misterio'], h: 'O que você está tentando decifrar.', r: 35 }
+            ],
+            VAZIO_PRIMORDIAL: [
+                { q: 'Antes do início, depois do fim, eu sou o que nunca existiu.', a: 'nada', alt: ['vazio','inexistencia','nulidade'], h: 'A absoluta falta de tudo.', r: 100 },
+                { q: 'Quanto mais te aproximas, mais distante fico. Contenho tudo e nada ao mesmo tempo.', a: 'infinito', alt: ['eternidade','imortalidade','infindavel'], h: 'Sem limites, sem fronteiras.', r: 100 },
+                { q: 'A ordem que nasce da desordem, o cosmos que brota do...', a: 'caos', alt: ['desordem','entropia','tumulto'], h: 'O oposto de harmonia.', r: 100 },
+                { q: 'A sentença que jamais será revogada, a única certeza dos vivos.', a: 'morte', alt: ['fim','obito','falecimento'], h: 'O destino final de toda carne.', r: 100 },
+                { q: 'A ausência que consome a luz, o berço dos deuses esquecidos.', a: 'trevas', alt: ['escuridao','sombra eterna','escuridão'], h: 'Onde a luz não ousa entrar.', r: 100 },
+                { q: 'O som que nunca foi ouvido, a voz do universo antes do verbo.', a: 'silêncio', alt: ['mudez','quietude','silencio'], h: 'A ausência de qualquer vibração.', r: 100 },
+                { q: 'A sombra que a tudo devora, o destino final de toda memória.', a: 'esquecimento', alt: ['oblivio','apagamento','amnésia'], h: 'Quando nada mais resta na lembrança.', r: 100 },
+                { q: 'O ventre que pariu estrelas e o túmulo que as aguarda.', a: 'abismo', alt: ['profundidade','vazio cosmico','precipicio'], h: 'A fenda insondável do cosmos.', r: 100 },
+                { q: 'A dança das partículas sem rumo, o princípio da dissipação.', a: 'entropia', alt: ['decadencia','desordem','caos'], h: 'A medida da desordem universal.', r: 100 },
+                { q: 'Eu sou a pergunta que jamais terá resposta, pois sou a própria ausência de significado.', a: 'incognita', alt: ['dúvida','misterio','enigma','duvida'], h: 'Aquilo que não pode ser conhecido.', r: 100 }
+            ]
+        };
+
+        const DIFF_META = {
+            MONTANHA_ANOES: { label: 'Montanha dos Anões', icon: 'fa-hill-rockslide', color: '#8D6E63', order: 1, desc: 'O início da jornada nas profundezas' },
+            PANTANO_SOMBRAS: { label: 'Pântano das Sombras', icon: 'fa-cloud-moon', color: '#4CAF50', order: 2, desc: 'Onde a névoa esconde a verdade' },
+            FORTALEZA: { label: 'Fortaleza', icon: 'fa-chess-rook', color: '#607D8B', order: 3, desc: 'Muralhas que guardam segredos' },
+            COVIL_DRAGOES: { label: 'Covil dos Dragões', icon: 'fa-dragon', color: '#EF5350', order: 4, desc: 'O fogo prova os corajosos' },
+            NECROPOLE_REIS: { label: 'Necrópole dos Reis', icon: 'fa-skull', color: '#B0BEC5', order: 5, desc: 'O silêncio dos soberanos mortos' },
+            ABISMO_ANTIGOS: { label: 'Abismo dos Antigos', icon: 'fa-eye-low-vision', color: '#7E57C2', order: 6, desc: 'A verdade que enlouquece' },
+            VAZIO_PRIMORDIAL: { label: 'Vazio Primordial', icon: 'fa-vector-square', color: '#1a001a', order: 7, desc: 'A essência do impossível' }
+        };
+        const DIFF_ORDER = ['MONTANHA_ANOES','PANTANO_SOMBRAS','FORTALEZA','COVIL_DRAGOES','NECROPOLE_REIS','ABISMO_ANTIGOS','VAZIO_PRIMORDIAL'];
+
+        const SAVE_KEY = 'sombras_v14';
+        const GLOBAL_RANK_KEY = 'sombras_global_rank_v7';
+
+        function defaultState() {
+            return {
+                playerName: '', score: 0, selectedAvatar: 'explorer',
+                completed: { MONTANHA_ANOES: [], PANTANO_SOMBRAS: [], FORTALEZA: [], COVIL_DRAGOES: [], NECROPOLE_REIS: [], ABISMO_ANTIGOS: [], VAZIO_PRIMORDIAL: [] },
+                hintsUsed: {}, ranking: []
+            };
+        }
+        function loadState() { try { const r = localStorage.getItem(SAVE_KEY); if (r) { const s = JSON.parse(r); return { ...defaultState(), ...s }; } } catch (e) {} return defaultState(); }
+        function saveState() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {} }
+        let state = loadState();
+        let session = { difficulty: null, currentIndex: 0, sessionTomos: 0, answering: true };
+
+        function loadGlobalRanking() { try { const r = localStorage.getItem(GLOBAL_RANK_KEY); return r ? JSON.parse(r) : []; } catch (e) { return []; } }
+        function saveGlobalRanking(entries) { try { localStorage.setItem(GLOBAL_RANK_KEY, JSON.stringify(entries)); } catch (e) {} }
+
+        function getSimulatedOnlinePlayers() {
+            return [
+               
+            ];
+        }
+
+        async function updateRanking() {
+            const entry = { name: state.playerName, tomos: state.score, avatar: state.selectedAvatar, color: '#EF5350' };
+            const idx = state.ranking.findIndex(e => e.name === state.playerName);
+            if (idx !== -1) { state.ranking[idx] = { ...state.ranking[idx], ...entry }; } else if (state.playerName) { state.ranking.push(entry); }
+            state.ranking.sort((a, b) => b.tomos - a.tomos); state.ranking = state.ranking.slice(0, 15); saveState();
+            
+            const global = loadGlobalRanking(); const gIdx = global.findIndex(e => e.name === state.playerName);
+            if (gIdx !== -1) { global[gIdx] = { ...global[gIdx], ...entry }; } else if (state.playerName) { global.push(entry); }
+            global.sort((a, b) => b.tomos - a.tomos); saveGlobalRanking(global.slice(0, 20));
+            
+            // Sincronizar com Firebase (se disponível)
+            if (window.savePlayerToFirebase && state.playerName) {
+                await savePlayerToFirebase(state.playerName, state.score, state.selectedAvatar).catch(e => console.warn('Firebase sync falhou:', e));
+            }
+            
+            try { if (window.bc && window.bc.postMessage) window.bc.postMessage({ type: 'rank_update', global: global.slice(0, 20) }); } catch (e) {}
+        }
+
+        let firebaseRanking = null;
+        async function getMergedRanking() {
+            let onlineRanking = [];
+            
+            // Tentar carregar do Firebase
+            if (window.getGlobalRankingFromFirebase) {
+                try {
+                    onlineRanking = await getGlobalRankingFromFirebase();
+                } catch (e) {
+                    console.warn('Firebase indisponível, usando cache local');
+                }
+            }
+            
+            // Fallback para localStorage
+            if (onlineRanking.length === 0) {
+                onlineRanking = loadGlobalRanking();
+            }
+            
+            const simulated = getSimulatedOnlinePlayers(); 
+            const merged = [...onlineRanking];
+            
+            for (const sim of simulated) { 
+                if (!merged.find(e => e.name === sim.name)) merged.push(sim); 
+            }
+            
+            merged.sort((a, b) => b.tomos - a.tomos); 
+            const unique = []; 
+            const seen = new Set();
+            
+            for (const e of merged) { 
+                if (!seen.has(e.name)) { 
+                    seen.add(e.name); 
+                    unique.push(e); 
+                } 
+            }
+            
+            firebaseRanking = unique.slice(0, 15);
+            return firebaseRanking;
+        }
+
+        function normalize(s) { return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/^(o|a|os|as|um|uma|uns|umas|de|do|da|dos|das|em|no|na|nos|nas)\s+/g, '').replace(/[^a-z0-9]/g, '').trim(); }
+        function levenshtein(a, b) { const m = a.length, n = b.length; if (!m) return n; if (!n) return m; const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0)); for (let i = 0; i <= m; i++) dp[i][0] = i; for (let j = 0; j <= n; j++) dp[0][j] = j; for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] !== b[j - 1] ? 1 : 0)); return dp[m][n]; }
+        function checkAnswer(input, riddle) { const norm = normalize(input); if (!norm) return false; const targets = [normalize(riddle.a), ...(riddle.alt || []).map(normalize)]; if (targets.includes(norm)) return true; for (const t of targets) { if (t.length < 2) continue; const d = levenshtein(norm, t); const mx = Math.max(2, Math.floor(t.length * 0.45)); if (d > 0 && d <= mx) return true; if (norm.includes(t) || t.includes(norm)) return true; } return false; }
+        function getCurrentTitle() { let t = TITLES[0]; for (const x of TITLES) if (state.score >= x.min) t = x; return t; }
+        function getAvatarData() { return AVATARS.find(a => a.id === state.selectedAvatar) || AVATARS[0]; }
+        function getAvatarById(id) { return AVATARS.find(a => a.id === id) || AVATARS[0]; }
+        function isAvatarUnlocked(av) { return state.score >= av.unlock; }
+        function nextRiddleIndex(diff) { for (let i = 0; i < RIDDLES[diff].length; i++) if (!state.completed[diff].includes(i)) return i; return -1; }
+        function getRemaining(diff) { return RIDDLES[diff].filter((_, i) => !state.completed[diff].includes(i)).length; }
+        function hintKey(d, i) { return d + '_' + i; }
+        function isDiffUnlocked(diff) { const order = DIFF_META[diff].order; if (order === 1) return true; const prevDiff = DIFF_ORDER[order - 2]; return state.completed[prevDiff] && state.completed[prevDiff].length === RIDDLES[prevDiff].length; }
+
+        let toastTimer = null;
+        function showToast(msg, type = '') { const el = document.getElementById('toast'); el.textContent = msg; el.className = 'toast show' + (type ? ' toast-' + type : ''); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2500); }
+        let currentScreen = 'screen-welcome';
+        function navigateTo(targetId, dir) { const cur = document.getElementById(currentScreen), tar = document.getElementById(targetId); if (!cur || !tar || currentScreen === targetId) return; cur.className = dir === 'forward' ? 'screen left' : 'screen right'; tar.className = dir === 'forward' ? 'screen right' : 'screen left'; void tar.offsetWidth; tar.className = 'screen active'; currentScreen = targetId; }
+
+        function avatarHTML(av, sizeClass, extraClass) { const cls = 'avatar-ring ' + sizeClass + (extraClass ? ' ' + extraClass : ''); const fs = sizeClass === 'avatar-lg' ? '2.2rem' : sizeClass === 'avatar-xs' ? '0.9rem' : '1.6rem'; if (av.img) { return '<div class="' + cls + '"><img src="' + av.img + '" alt="' + av.name + '" onerror="this.onerror=null;this.parentElement.innerHTML=\'<div class=avatar-inner style=background:' + av.gradient + ';font-size:' + fs + '><i class=\\\'fas ' + av.icon + '\\\'></i></div>\'"></div>'; } return '<div class="' + cls + '"><div class="avatar-inner" style="background:' + av.gradient + ';font-size:' + fs + '"><i class="fas fa-heart"></i></div></div>'; }
+
+        function renderHome() { const av = getAvatarData(), t = getCurrentTitle(); document.getElementById('home-avatar-container').innerHTML = avatarHTML(av, 'avatar-profile', 'selected'); document.getElementById('home-name').textContent = state.playerName; document.getElementById('home-title').textContent = t.name; document.getElementById('home-tomos').textContent = state.score; document.getElementById('home-titles').innerHTML = TITLES.map(t => '<span class="badge ' + (state.score >= t.min ? 'badge-blood' : 'badge-silver') + '" style="' + (state.score < t.min ? 'opacity:.25' : '') + '"><i class="fas ' + (state.score >= t.min ? 'fa-check' : 'fa-lock') + '" style="font-size:.5rem"></i> ' + t.name + '</span>').join(''); document.getElementById('online-count').textContent = getMergedRanking().length; }
+
+        function renderDiffCards() { const c = document.getElementById('diff-cards'); c.innerHTML = DIFF_ORDER.map(diff => { const m = DIFF_META[diff], rem = getRemaining(diff), tot = RIDDLES[diff].length, done = tot - rem; const unlocked = isDiffUnlocked(diff), allDone = rem === 0; let lockReason = ''; if (!unlocked) { const prevDiff = DIFF_ORDER[DIFF_META[diff].order - 2]; lockReason = 'Complete "' + DIFF_META[prevDiff].label + '" primeiro'; } return '<div class="diff-card ' + (allDone ? 'completed' : '') + ' ' + (!unlocked ? 'locked' : '') + '" data-diff="' + diff + '"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="display:flex;align-items:center;gap:10px"><i class="fas ' + m.icon + '" style="color:' + (unlocked ? m.color : '#555') + ';font-size:1.2rem"></i><span class="title-section" style="font-size:.85rem;color:' + (unlocked ? 'var(--silver-bright)' : '#555') + '">' + m.label + '</span></div><span class="badge ' + (unlocked ? 'badge-silver' : 'badge-locked') + '">' + done + '/' + tot + '</span></div><p style="font-size:.8rem;color:var(--silver-dim);font-style:italic;margin-bottom:10px">' + (!unlocked ? lockReason : allDone ? 'Todas desvendadas.' : rem + ' charadas restantes...') + '</p><div class="progress-bar"><div class="progress-fill" style="width:' + (done / tot) * 100 + '%;' + (!unlocked ? 'opacity:.3' : '') + '"></div></div><div style="display:flex;justify-content:space-between;margin-top:6px"><span style="font-size:.6rem;color:var(--silver-dim);font-family:var(--font-title);letter-spacing:1px">' + RIDDLES[diff][0].r + ' – ' + RIDDLES[diff][tot - 1].r + ' Tomos</span>' + (unlocked && !allDone ? '<i class="fas fa-chevron-right" style="color:var(--blood);font-size:.75rem"></i>' : '') + '</div></div>'; }).join(''); c.querySelectorAll('.diff-card:not(.locked):not(.completed)').forEach(card => { card.addEventListener('click', () => startGame(card.dataset.diff)); }); c.querySelectorAll('.diff-card.locked').forEach(card => { card.addEventListener('click', () => { const prevDiff = DIFF_ORDER[DIFF_META[card.dataset.diff].order - 2]; showToast('Complete "' + DIFF_META[prevDiff].label + '" primeiro.', 'error'); }); }); c.querySelectorAll('.diff-card.completed').forEach(card => { card.addEventListener('click', () => showToast('Caminho desvendado.', 'gold')); }); }
+
+        function renderGame() { const diff = session.difficulty, m = DIFF_META[diff], riddles = RIDDLES[diff], idx = session.currentIndex; const riddle = riddles[idx], tot = riddles.length, done = state.completed[diff].length; const hUsed = state.hintsUsed[hintKey(diff, idx)]; document.getElementById('game-tomos').textContent = state.score; document.getElementById('game-diff-badge').innerHTML = '<i class="fas ' + m.icon + '" style="font-size:.55rem"></i> ' + m.label; document.getElementById('game-diff-badge').style.borderColor = m.color + '44'; document.getElementById('game-diff-badge').style.color = m.color; document.getElementById('game-progress').style.width = (done / tot) * 100 + '%'; document.getElementById('game-progress-text').textContent = 'Charada ' + (done + 1) + ' de ' + tot; document.getElementById('session-tomos-display').textContent = 'Tomos nesta jornada: ' + session.sessionTomos; document.getElementById('riddle-text').textContent = '"' + riddle.q + '"'; document.getElementById('hint-area').innerHTML = hUsed ? '<div class="hint-box"><i class="fas fa-fire" style="margin-right:6px"></i>' + riddle.h + '</div>' : ''; const hb = document.getElementById('btn-hint'); if (hUsed) { hb.disabled = true; hb.innerHTML = '<i class="fas fa-fire"></i> Luz Revelada'; } else { hb.disabled = false; hb.innerHTML = '<i class="fas fa-fire"></i> Pedir Luz <span style="opacity:.4;font-size:.55rem">(–50%)</span>'; } document.getElementById('riddle-input').value = ''; document.getElementById('error-msg').style.display = 'none'; document.getElementById('game-input-area').style.display = ''; document.getElementById('oracle-card').classList.remove('anim-seal', 'anim-shake'); document.getElementById('wax-seal').classList.remove('show'); session.answering = true; setTimeout(() => document.getElementById('riddle-input').focus(), 400); }
+
+        function renderComplete() { const diff = session.difficulty, m = DIFF_META[diff]; const prevT = TITLES.filter(t => state.score - session.sessionTomos >= t.min).pop(); const newT = getCurrentTitle(), changed = newT.name !== prevT.name; document.getElementById('complete-content').innerHTML = '<div class="complete-icon"><i class="fas ' + m.icon + '"></i></div><h2 class="title-main" style="font-size:1.2rem;letter-spacing:4px">Selo Rompido</h2><div class="med-divider" style="width:50%"><i class="fas fa-feather-pointed"></i></div><p class="oracle-text" style="color:var(--silver-dim);font-size:.85rem">As sombras cederam ao teu conhecimento...</p><div class="complete-stats"><div class="stat-card"><div class="stat-value" style="color:var(--gold)">' + session.sessionTomos + '</div><div class="stat-label">Tomos Ganhos</div></div><div class="stat-card"><div class="stat-value">' + state.score + '</div><div class="stat-label">Tomos Totais</div></div></div>' + (changed ? '<div class="new-title-banner"><div class="label"><i class="fas fa-crown" style="margin-right:4px"></i> Novo Título</div><div class="ttl">' + newT.name + '</div></div>' : '') + '<button class="btn btn-primary" id="btn-complete-home" style="max-width:280px;margin-top:8px"><i class="fas fa-dungeon"></i> Voltar à Jornada</button>'; document.getElementById('btn-complete-home').addEventListener('click', () => { navigateTo('screen-home', 'back'); renderHome(); }); }
+
+        function renderWardrobe() { document.getElementById('avatar-grid').innerHTML = AVATARS.map(av => { const ul = isAvatarUnlocked(av), sel = state.selectedAvatar === av.id; return '<div class="avatar-option ' + (ul ? '' : 'locked') + ' ' + (sel ? 'selected' : '') + '" data-id="' + av.id + '">' + avatarHTML(av, 'avatar-lg', sel ? 'selected' : '') + '<div class="avatar-name">' + av.name + '</div><div class="avatar-cost ' + (ul ? '' : 'locked-cost') + '">' + (ul ? (sel ? '<i class="fas fa-check" style="font-size:.45rem"></i> Equipado' : av.unlock + ' <i class="fas fa-book-open" style="font-size:.4rem"></i>') : av.unlock + ' <i class="fas fa-lock" style="font-size:.4rem"></i>') + '</div>' + (!ul ? '<div class="lock-overlay"><i class="fas fa-lock"></i></div>' : '') + '</div>'; }).join(''); document.querySelectorAll('.avatar-option').forEach(o => { o.addEventListener('click', () => { const av = AVATARS.find(a => a.id === o.dataset.id); if (!isAvatarUnlocked(av)) { showToast('Necessários ' + av.unlock + ' Tomos.', 'error'); return; } state.selectedAvatar = av.id; saveState(); renderWardrobe(); renderHome(); showToast(av.name + ' equipado.', 'success'); }); }); }
+
+        function renderRanking() { const entries = getMergedRanking(); document.getElementById('ranking-list').innerHTML = entries.length > 0 ? entries.map((e, i) => { const av = getAvatarById(e.avatar || 'explorer'); const avatarImg = av.img ? '<img src="' + av.img + '" alt="' + av.name + '" onerror="this.onerror=null;this.innerHTML=\'<i class=\\\'fas ' + av.icon + '\\\' style=\\\'font-size:1rem;color:#888\\\'></i>\'">' : '<i class="fas ' + av.icon + '" style="font-size:1rem;color:#888"></i>'; return '<div class="rank-item ' + (e.name === state.playerName ? 'player-entry' : '') + '"><div class="rank-num">' + (i + 1) + '</div><div class="rank-avatar" style="background:' + (av.gradient || 'var(--bg)') + '">' + avatarImg + '</div><div style="flex:1;min-width:0"><div style="font-family:var(--font-title);font-size:.75rem;font-weight:900;letter-spacing:2px;color:var(--silver-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + e.name + '</div></div><div style="font-family:var(--font-title);font-size:.7rem;font-weight:900;color:var(--gold);letter-spacing:1px;white-space:nowrap"><i class="fas fa-book-open" style="font-size:.55rem;margin-right:3px"></i>' + e.tomos + '</div></div>'; }).join('') : '<p style="padding:20px;text-align:center;color:var(--silver-dim);font-style:italic">Nenhum viajante registrado ainda...</p>'; }
+
+        function startGame(diff) { const idx = nextRiddleIndex(diff); if (idx === -1) { showToast('Todas as charadas foram desvendadas.', 'gold'); return; } session.difficulty = diff; session.currentIndex = idx; session.sessionTomos = 0; navigateTo('screen-game', 'forward'); renderGame(); }
+
+        function submitAnswer() { if (!session.answering) return; const input = document.getElementById('riddle-input').value.trim(); if (!input) return; const diff = session.difficulty, idx = session.currentIndex, riddle = RIDDLES[diff][idx]; const hUsed = state.hintsUsed[hintKey(diff, idx)], reward = hUsed ? Math.floor(riddle.r / 2) : riddle.r; if (checkAnswer(input, riddle)) { session.answering = false; session.sessionTomos += reward; state.score += reward; state.completed[diff].push(idx); updateRanking(); saveState(); document.getElementById('game-input-area').style.display = 'none'; document.getElementById('error-msg').style.display = 'none'; document.getElementById('oracle-card').classList.add('anim-seal'); document.getElementById('wax-seal').classList.add('show'); document.getElementById('game-tomos').textContent = state.score; document.getElementById('session-tomos-display').textContent = 'Tomos nesta jornada: ' + session.sessionTomos; const norm = normalize(input), target = normalize(riddle.a), isFuzzy = norm !== target && levenshtein(norm, target) <= Math.max(2, Math.floor(target.length * 0.45)); showToast(isFuzzy ? '+' + reward + ' Tomos! (Aproximada)' : '+' + reward + ' Tomos de Sabedoria!', 'success'); setTimeout(() => { const ni = nextRiddleIndex(diff); if (ni === -1) { navigateTo('screen-complete', 'forward'); renderComplete(); } else { session.currentIndex = ni; renderGame(); } }, 1000); } else { const card = document.getElementById('oracle-card'); document.getElementById('error-msg').style.display = 'block'; card.classList.remove('anim-shake'); void card.offsetWidth; card.classList.add('anim-shake'); document.getElementById('riddle-input').value = ''; document.getElementById('riddle-input').focus(); } }
+
+        function useHint() { const k = hintKey(session.difficulty, session.currentIndex); if (state.hintsUsed[k]) return; state.hintsUsed[k] = true; saveState(); renderGame(); showToast('Luz revelada. Recompensa reduzida pela metade.', 'gold'); }
+
+        function syncRankingFromGlobal() { const global = loadGlobalRanking(); if (global.length > 0) { for (const ge of global) { const idx = state.ranking.findIndex(e => e.name === ge.name); if (idx !== -1) { if (ge.tomos > state.ranking[idx].tomos) state.ranking[idx] = { ...state.ranking[idx], ...ge }; } else { state.ranking.push({ ...ge }); } } state.ranking.sort((a, b) => b.tomos - a.tomos); state.ranking = state.ranking.slice(0, 15); saveState(); } }
+
+        const canvas = document.getElementById('ember-canvas'), ctx = canvas.getContext('2d'); let embers = []; const EC = 28;
+        function resizeC() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; } resizeC(); window.addEventListener('resize', resizeC); const prm = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+        function mkE() { return { x: Math.random() * canvas.width, y: canvas.height + Math.random() * 50, vx: (Math.random() - .5) * .4, vy: -(0.3 + Math.random() * .7), size: Math.max(.5, 1 + Math.random() * 2), life: 0, maxLife: 200 + Math.random() * 300, hue: Math.random() > .3 ? 0 : 20 }; }
+        function animE() { if (prm) return; ctx.clearRect(0, 0, canvas.width, canvas.height); if (embers.length < EC && Math.random() > .8) embers.push(mkE()); for (let i = embers.length - 1; i >= 0; i--) { const e = embers[i]; e.x += e.vx; e.y += e.vy; e.life++; const op = Math.max(0, 1 - e.life / e.maxLife); ctx.fillStyle = 'hsla(' + e.hue + ',100%,60%,' + op * .4 + ')'; ctx.beginPath(); ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2); ctx.fill(); if (e.life > e.maxLife || e.y < -20) embers.splice(i, 1); } requestAnimationFrame(animE); } animE();
+
+        try { window.bc = new BroadcastChannel('sombras_ranking'); window.bc.onmessage = function(e) { if (e.data && e.data.type === 'rank_update' && e.data.global) { saveGlobalRanking(e.data.global); if (document.getElementById('modal-ranking').classList.contains('open')) renderRanking(); document.getElementById('online-count').textContent = getMergedRanking().length; } }; } catch (e) { window.bc = null; }
+
+        document.getElementById('input-name').addEventListener('input', e => { document.getElementById('btn-start').disabled = e.target.value.trim().length < 2; });
+        document.getElementById('btn-start').addEventListener('click', () => { state.playerName = document.getElementById('input-name').value.trim(); updateRanking(); saveState(); renderHome(); navigateTo('screen-home', 'forward'); });
+        document.getElementById('btn-play').addEventListener('click', () => { renderDiffCards(); navigateTo('screen-difficulty', 'forward'); });
+        document.getElementById('btn-diff-back').addEventListener('click', () => { navigateTo('screen-home', 'back'); renderHome(); });
+        document.getElementById('btn-game-back').addEventListener('click', () => { navigateTo('screen-difficulty', 'back'); renderDiffCards(); });
+        document.getElementById('btn-wardrobe').addEventListener('click', () => { renderWardrobe(); document.getElementById('modal-wardrobe').classList.add('open'); });
+        document.getElementById('btn-wardrobe-close').addEventListener('click', () => document.getElementById('modal-wardrobe').classList.remove('open'));
+        document.getElementById('btn-ranking').addEventListener('click', () => { syncRankingFromGlobal(); renderRanking(); document.getElementById('modal-ranking').classList.add('open'); });
+        document.getElementById('btn-ranking-close').addEventListener('click', () => document.getElementById('modal-ranking').classList.remove('open'));
+        document.getElementById('btn-ranking-refresh').addEventListener('click', () => { syncRankingFromGlobal(); renderRanking(); showToast('Ranking atualizado.', 'success'); });
+        document.getElementById('btn-submit').addEventListener('click', submitAnswer);
+        document.getElementById('btn-hint').addEventListener('click', useHint);
+        document.getElementById('riddle-input').addEventListener('keypress', e => { if (e.key === 'Enter') submitAnswer(); });
+        document.getElementById('btn-sync-rank').addEventListener('click', () => { syncRankingFromGlobal(); renderHome(); showToast('Reino sincronizado.', 'gold'); });
+
+        if (state.playerName) { document.getElementById('input-name').value = state.playerName; document.getElementById('btn-start').disabled = false; }
+        if (state.playerName && currentScreen === 'screen-welcome') { renderHome(); navigateTo('screen-home', 'forward'); }
+    </script>
+    
+    <!-- ⚡ SUPABASE REALTIME DATABASE - RANKING ONLINE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Carregar credenciais salvas
+        let supabaseClient = null;
+        
+        function initSupabase() {
+            try {
+                const saved = localStorage.getItem('supabase_config');
+                if (!saved) {
+                    console.warn('⚠️ Supabase não configurado. Abra SUPABASE-SETUP.html para configurar.');
+                    return false;
+                }
+                
+                const { url, key } = JSON.parse(saved);
+                supabaseClient = window.supabase.createClient(url, key);
+                console.log('✅ Supabase inicializado com sucesso!');
+                
+                // Sincronizar ranking atual quando iniciar
+                if (state.playerName && state.score > 0) {
+                    saveToSupabase(state.playerName, state.score, state.selectedAvatar);
+                }
+                
+                return true;
+            } catch (e) {
+                console.error('❌ Erro ao inicializar Supabase:', e.message);
+                return false;
+            }
+        }
+        
+        async function saveToSupabase(playerName, tomos, avatar) {
+            if (!supabaseClient) return;
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('players')
+                    .upsert([{
+                        name: playerName,
+                        tomos: tomos,
+                        avatar: avatar,
+                        last_updated: new Date().toISOString()
+                    }], { onConflict: 'name' });
+                
+                if (error) {
+                    console.warn('⚠️ Erro Supabase:', error.message);
+                    return false;
+                }
+                
+                console.log('✅ Dados salvos no Supabase!');
+                return true;
+            } catch (e) {
+                console.warn('⚠️ Erro ao salvar:', e.message);
+                return false;
+            }
+        }
+        
+        async function getRankingFromSupabase() {
+            if (!supabaseClient) return [];
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('players')
+                    .select('*')
+                    .order('tomos', { ascending: false })
+                    .limit(20);
+                
+                if (error) {
+                    console.warn('⚠️ Erro ao carregar ranking:', error.message);
+                    return [];
+                }
+                
+                if (!data || data.length === 0) return [];
+                
+                return data.map((player, idx) => ({
+                    rank: idx + 1,
+                    name: player.name,
+                    tomos: player.tomos,
+                    avatar: player.avatar,
+                    color: '#EF5350'
+                }));
+            } catch (e) {
+                console.warn('⚠️ Erro ao buscar ranking:', e.message);
+                return [];
+            }
+        }
+        
+        // Sobrescrever funções de ranking para usar Supabase
+        const originalUpdateRanking = updateRanking;
+        async function updateRanking() {
+            // Chamar função original
+            originalUpdateRanking();
+            
+            // Sincronizar com Supabase
+            if (state.playerName && supabaseClient) {
+                await saveToSupabase(state.playerName, state.score, state.selectedAvatar);
+            }
+        }
+        
+        const originalGetMergedRanking = getMergedRanking;
+        async function getMergedRanking() {
+            let supabaseRanking = [];
+            
+            if (supabaseClient) {
+                supabaseRanking = await getRankingFromSupabase();
+            }
+            
+            if (supabaseRanking.length > 0) {
+                return supabaseRanking;
+            }
+            
+            // Fallback para localStorage
+            return originalGetMergedRanking();
+        }
+        
+        // Inicializar Supabase quando página carregar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initSupabase);
+        } else {
+            initSupabase();
+        }
+    </script>
+</body>
+</html>

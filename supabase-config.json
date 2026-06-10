@@ -1,0 +1,292 @@
+{
+  "supabase_setup": {
+    "project_name": "enigma-ranking",
+    "version": "1.0",
+    "created": "2026-06-10",
+    "status": "Template",
+    
+    "account_setup": {
+      "step": 1,
+      "title": "Criar Conta Supabase",
+      "url": "https://supabase.com",
+      "instructions": [
+        "Acesse https://supabase.com",
+        "Clique em 'Start your project'",
+        "Login com GitHub",
+        "Confirme email"
+      ]
+    },
+    
+    "project_setup": {
+      "step": 2,
+      "title": "Criar Projeto",
+      "fields": {
+        "organization": "seu-username",
+        "project_name": "enigma-ranking",
+        "database_password": "SenhaForte@2024!Enigma",
+        "region": "us-east-1",
+        "postgres_version": "15"
+      },
+      "wait_time": "2-3 minutos"
+    },
+    
+    "database_table": {
+      "step": 3,
+      "title": "Criar Tabela SQL",
+      "table_name": "public.players",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGSERIAL",
+          "constraint": "PRIMARY KEY",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "constraint": "UNIQUE NOT NULL",
+          "nullable": false,
+          "description": "Nome do jogador (único)"
+        },
+        {
+          "name": "tomos",
+          "type": "INTEGER",
+          "default": 0,
+          "nullable": false,
+          "description": "Pontuação total"
+        },
+        {
+          "name": "avatar",
+          "type": "TEXT",
+          "default": "explorer",
+          "nullable": false,
+          "description": "ID do avatar"
+        },
+        {
+          "name": "last_updated",
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "default": "NOW()",
+          "nullable": true,
+          "description": "Última atualização"
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "default": "NOW()",
+          "nullable": true,
+          "description": "Data de criação"
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "default": "NOW()",
+          "nullable": true,
+          "description": "Última modificação"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_players_tomos",
+          "columns": ["tomos"],
+          "order": "DESC",
+          "purpose": "Ordenar ranking por pontuação"
+        },
+        {
+          "name": "idx_players_name",
+          "columns": ["name"],
+          "purpose": "Buscar jogador por nome"
+        },
+        {
+          "name": "idx_players_created",
+          "columns": ["created_at"],
+          "order": "DESC",
+          "purpose": "Ordenar por data de criação"
+        }
+      ]
+    },
+    
+    "row_level_security": {
+      "step": 4,
+      "title": "Configurar Permissões (RLS)",
+      "enabled": true,
+      "policies": [
+        {
+          "name": "Allow public read access",
+          "operation": "SELECT",
+          "using_expression": "true",
+          "purpose": "Todos podem ler o ranking"
+        },
+        {
+          "name": "Allow public insert",
+          "operation": "INSERT",
+          "check_expression": "true",
+          "purpose": "Qualquer um pode criar entrada"
+        },
+        {
+          "name": "Allow public update",
+          "operation": "UPDATE",
+          "using_expression": "true",
+          "check_expression": "true",
+          "purpose": "Qualquer um pode atualizar pontos"
+        }
+      ]
+    },
+    
+    "realtime": {
+      "step": 5,
+      "title": "Ativar Realtime",
+      "enabled": true,
+      "publication": "supabase_realtime",
+      "tables": ["public.players"],
+      "update_frequency": "realtime",
+      "sql_command": "ALTER PUBLICATION supabase_realtime ADD TABLE public.players;"
+    },
+    
+    "credentials": {
+      "step": 6,
+      "title": "Copiar Credenciais",
+      "location": "Project Settings → API",
+      "required_keys": [
+        {
+          "name": "PROJECT_URL",
+          "example": "https://xxxxx-xxxxx-xxxxx.supabase.co",
+          "type": "public",
+          "save": true
+        },
+        {
+          "name": "ANON_KEY",
+          "example": "eyJhbGciOiJIUzI1NiIsInR...",
+          "type": "public",
+          "save": true
+        }
+      ],
+      "do_not_share": [
+        {
+          "name": "SERVICE_ROLE_KEY",
+          "reason": "Apenas para backend - não usar no cliente"
+        }
+      ]
+    },
+    
+    "testing": {
+      "step": 7,
+      "title": "Testar Integração",
+      "tests": [
+        {
+          "name": "SQL Test",
+          "command": "SELECT * FROM public.players;",
+          "expected": "Tabela vazia ou com dados"
+        },
+        {
+          "name": "Insert Test",
+          "command": "INSERT INTO public.players (name, tomos, avatar) VALUES ('TestPlayer', 100, 'explorer');",
+          "expected": "1 row inserted"
+        },
+        {
+          "name": "Realtime Test",
+          "description": "Inserir dados no SQL e ver atualizar em tempo real no navegador"
+        }
+      ]
+    },
+    
+    "troubleshooting": {
+      "common_issues": [
+        {
+          "issue": "Table does not exist",
+          "solution": "Verifique se executou o SQL de criação",
+          "steps": [
+            "Vá em SQL Editor",
+            "Execute o SQL novamente",
+            "Verifique se não há erros"
+          ]
+        },
+        {
+          "issue": "Permission denied",
+          "solution": "RLS ativado mas sem políticas",
+          "steps": [
+            "Execute SQL de políticas",
+            "Ative RLS nas configurações",
+            "Espere 30 segundos e tente novamente"
+          ]
+        },
+        {
+          "issue": "Realtime não funciona",
+          "solution": "Realtime não ativado na publicação",
+          "steps": [
+            "Execute: ALTER PUBLICATION supabase_realtime ADD TABLE public.players;",
+            "Verifique em Database → Replication",
+            "Confirme que players está com toggle ON"
+          ]
+        },
+        {
+          "issue": "Dados não salvam do jogo",
+          "solution": "Credenciais incorretas ou erro de conexão",
+          "steps": [
+            "Abra Console (F12)",
+            "Procure por erros de rede",
+            "Verifique PROJECT_URL e ANON_KEY",
+            "Teste INSERT direto no SQL"
+          ]
+        }
+      ]
+    },
+    
+    "configuration": {
+      "title": "Arquivo supabase-config.js",
+      "template": {
+        "SUPABASE_CONFIG": {
+          "url": "https://seu-projeto-XXXXX.supabase.co",
+          "key": "eyJhbGciOiJIUzI1NiIsInR..."
+        }
+      }
+    },
+    
+    "checklist": {
+      "before_starting": [
+        "Criar conta GitHub (se não tiver)",
+        "Definir senha forte para banco"
+      ],
+      "during_setup": [
+        "Anotar nome do projeto: enigma-ranking",
+        "Copiar URL e Keys em lugar seguro",
+        "Testar SQL direto"
+      ],
+      "before_testing": [
+        "Abrir enigma.html no navegador",
+        "Abrir Console (F12)",
+        "Testar com um jogador"
+      ],
+      "final_verification": [
+        "Ranking mostra dados corretos",
+        "Dados persistem ao recarregar",
+        "Múltiplos jogadores sincronizam"
+      ]
+    },
+    
+    "file_structure": {
+      "important_files": [
+        "SUPABASE-SETUP.html - Interface visual para configurar",
+        "SUPABASE-SETUP-COMPLETO.md - Guia passo a passo completo",
+        "SUPABASE-VISUAL.md - Com diagramas e prints",
+        "SUPABASE-SQL-COMPLETO.sql - SQL pronto para copiar",
+        "enigma.html - Jogo (já integrado com Supabase)",
+        "supabase-config.js - Configuração"
+      ]
+    },
+    
+    "links_úteis": {
+      "official": "https://supabase.com",
+      "dashboard": "https://app.supabase.com",
+      "docs": "https://supabase.com/docs",
+      "api_reference": "https://supabase.com/docs/guides/api",
+      "github": "https://github.com/supabase/supabase"
+    },
+    
+    "support": {
+      "documentation": "Veja SUPABASE-SETUP-COMPLETO.md",
+      "visual_guide": "Abra SUPABASE-VISUAL.md",
+      "setup_tool": "Abra SUPABASE-SETUP.html",
+      "sql_file": "Use SUPABASE-SQL-COMPLETO.sql"
+    }
+  }
+}

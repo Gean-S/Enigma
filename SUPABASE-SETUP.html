@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Setup Supabase - Enigma Ranking</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header p {
+            color: #999;
+            font-size: 1.1rem;
+        }
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .step-card {
+            background: rgba(30, 30, 46, 0.8);
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .step-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #10b981, #059669);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .step-card:hover {
+            border-color: #10b981;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+        }
+        .step-card:hover::before {
+            opacity: 1;
+        }
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: white;
+        }
+        .step-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #10b981;
+        }
+        .step-card ul {
+            list-style: none;
+        }
+        .step-card li {
+            padding: 8px 0;
+            font-size: 0.95rem;
+            color: #bbb;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .step-card li::before {
+            content: '→';
+            color: #10b981;
+            font-weight: bold;
+        }
+        .sql-box {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+        .sql-box h3 {
+            color: #10b981;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sql-code {
+            background: rgba(0, 0, 0, 0.7);
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            color: #10b981;
+        }
+        .copy-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            transition: opacity 0.3s ease;
+        }
+        .copy-btn:hover {
+            opacity: 0.8;
+        }
+        .credentials-section {
+            background: rgba(30, 30, 46, 0.8);
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        .credentials-section h3 {
+            color: #10b981;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .credential-item {
+            margin-bottom: 20px;
+        }
+        .credential-label {
+            color: #10b981;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .credential-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #e0e0e0;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        .credential-input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+        .btn-secondary {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+        .btn-secondary:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            display: none;
+        }
+        .success-message.show {
+            display: block;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            margin-top: 40px;
+        }
+        .link {
+            color: #10b981;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🟢 Setup Supabase</h1>
+            <p>Configure seu Ranking Online em 5 minutos!</p>
+        </div>
+
+        <div class="steps-container">
+            <div class="step-card">
+                <div class="step-number">1️⃣</div>
+                <h3>Criar Conta</h3>
+                <ul>
+                    <li>Acesse supabase.com</li>
+                    <li>Login com GitHub</li>
+                    <li>Confirme email</li>
+                </ul>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">2️⃣</div>
+                <h3>Novo Projeto</h3>
+                <ul>
+                    <li>Clique "Create new project"</li>
+                    <li>Nome: enigma-ranking</li>
+                    <li>Aguarde criação</li>
+                </ul>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">3️⃣</div>
+                <h3>Criar Tabela SQL</h3>
+                <ul>
+                    <li>Vá a "SQL Editor"</li>
+                    <li>Copie SQL abaixo</li>
+                    <li>Execute</li>
+                </ul>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">4️⃣</div>
+                <h3>Copiar Keys</h3>
+                <ul>
+                    <li>Settings → API</li>
+                    <li>Project URL</li>
+                    <li>Anon key</li>
+                </ul>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">5️⃣</div>
+                <h3>Colar Aqui</h3>
+                <ul>
+                    <li>Cole suas credenciais</li>
+                    <li>Clique "Salvar"</li>
+                    <li>Pronto!</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="sql-box">
+            <h3><i class="fas fa-database"></i> SQL para Executar</h3>
+            <p style="margin-bottom: 15px; color: #999; font-size: 0.9rem;">
+                ⚠️ Copie este código e execute no "SQL Editor" do Supabase:
+            </p>
+            <div class="sql-code" id="sqlCode">CREATE TABLE IF NOT EXISTS public.players (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL,
+  tomos INTEGER NOT NULL DEFAULT 0,
+  avatar TEXT NOT NULL DEFAULT 'explorer',
+  last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_players_tomos ON public.players(tomos DESC);
+
+ALTER PUBLICATION supabase_realtime ADD TABLE public.players;
+
+ALTER TABLE public.players ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access" ON public.players
+  FOR SELECT USING (true);
+
+CREATE POLICY "Allow public insert" ON public.players
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Allow public update" ON public.players
+  FOR UPDATE USING (true) WITH CHECK (true);</div>
+            <button class="copy-btn" onclick="copySQL()"><i class="fas fa-copy"></i> Copiar SQL</button>
+        </div>
+
+        <div class="credentials-section">
+            <h3><i class="fas fa-key"></i> Suas Credenciais Supabase</h3>
+            
+            <div class="credential-item">
+                <label class="credential-label">
+                    Project URL
+                    <span style="color: #999; font-weight: normal; font-size: 0.85rem;">
+                        (encontre em Settings → API)
+                    </span>
+                </label>
+                <input type="text" class="credential-input" id="urlInput" 
+                       placeholder="https://seu-projeto-aleatorio.supabase.co">
+            </div>
+
+            <div class="credential-item">
+                <label class="credential-label">
+                    Anon Key
+                    <span style="color: #999; font-weight: normal; font-size: 0.85rem;">
+                        (a chave pública)
+                    </span>
+                </label>
+                <input type="password" class="credential-input" id="keyInput" 
+                       placeholder="eyJhbGciOiJIUzI1NiIsInR...">
+                <button class="copy-btn" style="margin-top: 8px; background: transparent; color: #10b981; border: 1px solid #10b981; padding: 6px 12px;" 
+                        onclick="toggleKeyVisibility()">
+                    <i class="fas fa-eye"></i> Mostrar
+                </button>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="saveCredentials()">
+                    <i class="fas fa-save"></i> Salvar Credenciais
+                </button>
+                <button class="btn btn-secondary" onclick="openSupabaseLink()">
+                    <i class="fas fa-external-link-alt"></i> Abrir Supabase
+                </button>
+            </div>
+
+            <div class="success-message" id="successMsg">
+                <i class="fas fa-check-circle"></i> ✅ Credenciais salvas com sucesso!
+            </div>
+        </div>
+
+        <div class="credentials-section" style="background: rgba(16, 185, 129, 0.05);">
+            <h3><i class="fas fa-check-double"></i> Checklist Final</h3>
+            <ul style="list-style: none;">
+                <li style="padding: 8px 0; color: #bbb;">
+                    <input type="checkbox" id="check1"> <label for="check1">Criei conta no Supabase</label>
+                </li>
+                <li style="padding: 8px 0; color: #bbb;">
+                    <input type="checkbox" id="check2"> <label for="check2">Criei novo projeto</label>
+                </li>
+                <li style="padding: 8px 0; color: #bbb;">
+                    <input type="checkbox" id="check3"> <label for="check3">Executei SQL na tabela</label>
+                </li>
+                <li style="padding: 8px 0; color: #bbb;">
+                    <input type="checkbox" id="check4"> <label for="check4">Copiei as credenciais</label>
+                </li>
+                <li style="padding: 8px 0; color: #bbb;">
+                    <input type="checkbox" id="check5"> <label for="check5">Cliquei em "Salvar Credenciais"</label>
+                </li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>Pronto para testar? Abra <strong>enigma.html</strong> e jogue! 🎮</p>
+            <p style="margin-top: 20px; font-size: 0.9rem;">
+                Documentação: <a href="https://supabase.com/docs" class="link" target="_blank">supabase.com/docs</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function copySQL() {
+            const sqlCode = document.getElementById('sqlCode');
+            const text = sqlCode.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ SQL copiado! Cole no Supabase SQL Editor');
+            }).catch(() => {
+                alert('❌ Erro ao copiar. Copie manualmente.');
+            });
+        }
+
+        function toggleKeyVisibility() {
+            const input = document.getElementById('keyInput');
+            const btn = event.target.closest('button');
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.innerHTML = '<i class="fas fa-eye-slash"></i> Ocultar';
+            } else {
+                input.type = 'password';
+                btn.innerHTML = '<i class="fas fa-eye"></i> Mostrar';
+            }
+        }
+
+        function saveCredentials() {
+            const url = document.getElementById('urlInput').value.trim();
+            const key = document.getElementById('keyInput').value.trim();
+
+            if (!url || !key) {
+                alert('❌ Preencha URL e Key!');
+                return;
+            }
+
+            if (!url.startsWith('https://')) {
+                alert('❌ URL deve começar com https://');
+                return;
+            }
+
+            if (key.length < 20) {
+                alert('❌ Key parece inválida (muito curta)');
+                return;
+            }
+
+            // Salvar no localStorage
+            localStorage.setItem('supabase_config', JSON.stringify({ url, key }));
+
+            // Mostrar mensagem de sucesso
+            const msg = document.getElementById('successMsg');
+            msg.classList.add('show');
+            setTimeout(() => msg.classList.remove('show'), 3000);
+
+            console.log('✅ Credenciais salvas!');
+            alert('✅ Credenciais salvas com sucesso!\n\nAgora:\n1. Abra enigma.html\n2. Comece a jogar\n3. O ranking sincronizará automaticamente!');
+        }
+
+        function openSupabaseLink() {
+            window.open('https://supabase.com', '_blank');
+        }
+
+        // Carregar credenciais se já existirem
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('supabase_config');
+            if (saved) {
+                const { url, key } = JSON.parse(saved);
+                document.getElementById('urlInput').value = url;
+                document.getElementById('keyInput').value = key;
+            }
+        });
+    </script>
+</body>
+</html>
