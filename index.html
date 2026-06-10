@@ -1570,7 +1570,6 @@
         document.getElementById('btn-sync-rank').addEventListener('click', () => { syncRankingFromGlobal(); renderHome(); showToast('Reino sincronizado.', 'gold'); });
 
         if (state.playerName) { document.getElementById('input-name').value = state.playerName; document.getElementById('btn-start').disabled = false; }
-        if (state.playerName && currentScreen === 'screen-welcome') { renderHome(); navigateTo('screen-home', 'forward'); }
     </script>
     
     <!-- ⚡ SUPABASE REALTIME DATABASE - RANKING ONLINE -->
@@ -1581,17 +1580,21 @@
         
         function initSupabase() {
             try {
+                let creds = null;
                 const saved = localStorage.getItem('supabase_config');
-                if (!saved) {
-                    console.warn('⚠️ Supabase não configurado. Abra SUPABASE-SETUP.html para configurar.');
-                    return false;
+                if (saved) {
+                    creds = JSON.parse(saved);
+                } else {
+                    creds = {
+                        url: "https://efdbihtozuulwxmqvszw.supabase.co",
+                        key: "sb_publishable_sFXJ1QXWSh_oH1LSR49x6g_SFwqPfU_"
+                    };
+                    localStorage.setItem('supabase_config', JSON.stringify(creds));
                 }
                 
-                const { url, key } = JSON.parse(saved);
-                supabaseClient = window.supabase.createClient(url, key);
+                supabaseClient = window.supabase.createClient(creds.url, creds.key);
                 console.log('✅ Supabase inicializado com sucesso!');
                 
-                // Sincronizar ranking atual quando iniciar
                 if (state.playerName && state.score > 0) {
                     saveToSupabase(state.playerName, state.score, state.selectedAvatar);
                 }
